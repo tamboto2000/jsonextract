@@ -1,3 +1,4 @@
+// Package jsonextract is a small library for extracting JSON from a string, it extract a possible valid JSONs from a string or text
 package jsonextract
 
 import (
