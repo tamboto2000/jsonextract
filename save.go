@@ -25,13 +25,17 @@ func save(data [][]byte, path string) error {
 	rest := make([]byte, 0)
 	rest = append(rest, 91)
 	c := len(data)
-	for i, d := range data {
-		rest = append(rest, d...)
-		if i == c-1 {
-			rest = append(rest, 93)
-		} else {
-			rest = append(rest, 44)
+	if c > 0 {
+		for i, d := range data {
+			rest = append(rest, d...)
+			if i == c-1 {
+				rest = append(rest, 93)
+			} else {
+				rest = append(rest, 44)
+			}
 		}
+	} else {
+		rest = append(rest, 93)
 	}
 
 	if _, err = f.Write(rest); err != nil {
