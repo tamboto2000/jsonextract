@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/tamboto2000/jsonextract.svg)](https://pkg.go.dev/github.com/tamboto2000/jsonextract)
 
-Package jsonextract is a small library for extracting JSON from a string, it extract a possible valid JSONs from a string or text. Right now only latin characters (a-z, A-Z, 0-9) are supported. This package did not guarantee 100% success rate of parsing, so it is highly recommended to check if the JSONs that you get is valid.
+Package jsonextract is a small library for extracting JSON from a string, it extract a possible valid JSONs from a string or text. This package did not guarantee 100% success rate of parsing, so it is highly recommended to check if the JSONs that you get is valid.
 
 ### Installation
 JSONExtract require Go v1.14 or higher
