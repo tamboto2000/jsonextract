@@ -541,6 +541,25 @@ func (n *node) parseFalseBool() bool {
 	return false
 }
 
+func (n *node) parseNullVal() bool {
+	expect := []byte{117, 108, 108}
+	idx := 0
+	for n.next() {
+		if n.char != expect[idx] {
+			return false
+		}
+
+		n.pushChar()
+		if idx == 2 {
+			return true
+		}
+
+		idx++
+	}
+
+	return false
+}
+
 func (n *node) parseVal() bool {
 	for n.next() {
 		// try to parse string
@@ -563,9 +582,9 @@ func (n *node) parseVal() bool {
 			return false
 		}
 
-		// try to parse boolean
 		if isCharLetter(n.char) {
 			n.pushChar()
+			// try to parse boolean
 			if n.char == 116 {
 				if n.parseTrueBool() {
 					return true
@@ -576,6 +595,15 @@ func (n *node) parseVal() bool {
 
 			if n.char == 102 {
 				if n.parseFalseBool() {
+					return true
+				}
+
+				return false
+			}
+
+			// try to parse null
+			if n.char == 110 {
+				if n.parseNullVal() {
 					return true
 				}
 
