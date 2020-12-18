@@ -17,6 +17,8 @@ var (
 	quot           = byte(34)
 	colon          = byte(58)
 	coma           = byte(44)
+	backSlash      = byte(92)
+	slash          = byte(47)
 )
 
 func parse(data io.Reader) ([][]byte, error) {
@@ -113,8 +115,25 @@ func (n *node) pushChar() {
 // parse json object key
 func (n *node) parseKey() bool {
 	endKey := false
+	onEsc := false
 	for n.next() {
 		if !endKey {
+			if !onEsc && n.char == backSlash {
+				n.pushChar()
+				onEsc = true
+				continue
+			}
+
+			if onEsc {
+				if n.char == quot || n.char == slash || n.char == backSlash {
+					n.pushChar()
+					onEsc = false
+					continue
+				}
+
+				return false
+			}
+
 			if n.char == quot {
 				endKey = true
 			}
@@ -344,33 +363,30 @@ func (n *node) parseArr() bool {
 }
 
 func (n *node) parseStrVal() bool {
-	var prevc byte
+	onEsc := false
 	for n.next() {
-		if n.char == quot {
+		if !onEsc && n.char == backSlash {
 			n.pushChar()
-
-			// back slash (\)
-			if prevc == 92 {
-				prevc = n.char
-				continue
-			}
-
-			return true
+			onEsc = true
+			continue
 		}
 
-		// char /
-		if n.char == 47 {
-			if prevc == 92 {
+		if onEsc {
+			if n.char == quot || n.char == slash || n.char == backSlash {
 				n.pushChar()
-				prevc = n.char
+				onEsc = false
 				continue
 			}
 
 			return false
 		}
 
+		if n.char == quot {
+			n.pushChar()
+			return true
+		}
+
 		n.pushChar()
-		prevc = n.char
 	}
 
 	return false
