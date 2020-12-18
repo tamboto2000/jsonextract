@@ -393,7 +393,23 @@ func (n *node) parseStrVal() bool {
 }
 
 func (n *node) parseNumVal() bool {
+	onSyntax := false
+
 	for n.next() {
+		if onSyntax {
+			if n.char == coma || n.char == closeBrack || n.char == closeCurlBrack {
+				n.reader.unread()
+				return true
+			}
+
+			if isCharSyntax(n.char) {
+				n.pushChar()
+				continue
+			}
+
+			return false
+		}
+
 		if isCharNumber(n.char) {
 			n.pushChar()
 			continue
@@ -416,6 +432,7 @@ func (n *node) parseNumVal() bool {
 
 		if isCharSyntax(n.char) {
 			n.pushChar()
+			onSyntax = true
 			continue
 		}
 
@@ -426,7 +443,23 @@ func (n *node) parseNumVal() bool {
 }
 
 func (n *node) parseFloatVal() bool {
+	onSyntax := false
+
 	for n.next() {
+		if onSyntax {
+			if n.char == coma || n.char == closeBrack || n.char == closeCurlBrack {
+				n.reader.unread()
+				return true
+			}
+
+			if isCharSyntax(n.char) {
+				n.pushChar()
+				continue
+			}
+
+			return false
+		}
+
 		if isCharNumber(n.char) {
 			n.pushChar()
 			continue
@@ -439,6 +472,7 @@ func (n *node) parseFloatVal() bool {
 
 		if isCharSyntax(n.char) {
 			n.pushChar()
+			onSyntax = true
 			continue
 		}
 
