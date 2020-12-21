@@ -71,7 +71,7 @@ type JSON struct {
 	// Key and value pair, like "key" : "val", only assigned when Kind == Object
 	KeyVal map[string]*JSON
 	// Values for Array, only assigned if Kind == Array
-	Vals []JSON
+	Vals []*JSON
 	// If data is just a single object, like Int, Float, Boolen, not Object nor Array
 	Val interface{}
 
@@ -155,6 +155,20 @@ func parse(r reader) ([]*JSON, error) {
 		}
 
 		if json, err := parseObj(r); err != nil {
+			if err == errInvalid || err == errUnmatch {
+				r.UnreadByte()
+			} else {
+				if err == io.EOF {
+					return jsons, nil
+				}
+
+				return nil, err
+			}
+		} else {
+			jsons = append(jsons, json)
+		}
+
+		if json, err := parseArray(r); err != nil {
 			if err == errInvalid || err == errUnmatch {
 				r.UnreadByte()
 			} else {
@@ -658,6 +672,33 @@ func parseObj(r reader) (*JSON, error) {
 					continue
 				}
 
+				// Try to parse array
+				if arr, err := parseArray(r); err != nil {
+					if err == errInvalid {
+						// DELETE
+						// fmt.Println("invalid obj", string([]byte{char}))
+						return nil, errInvalid
+					}
+
+					if err == io.EOF {
+						return nil, err
+					}
+
+					if err == errUnmatch {
+						// DELETE
+						// fmt.Println("unmatch obj", string([]byte{char}))
+						r.UnreadByte()
+					}
+				} else if err != nil {
+					return nil, err
+				} else {
+					json.KeyVal[currKey] = arr
+					raw.pushBytes(arr.Raw.Bytes())
+					currKey = ""
+					valFound = true
+					continue
+				}
+
 				return nil, errInvalid
 			}
 
@@ -687,5 +728,198 @@ func parseObj(r reader) (*JSON, error) {
 
 	// DELETE
 	// fmt.Println("unmatch obj", string([]byte{char}))
+	return nil, errUnmatch
+}
+
+func parseArray(r reader) (*JSON, error) {
+	char, err := r.ReadByte()
+	if err != nil {
+		return nil, err
+	}
+
+	if char == openBrack {
+		raw := new(Raw)
+		raw.push(char)
+		json := &JSON{Kind: Array, Raw: raw}
+
+		valFound := false
+		for {
+			if !valFound {
+				char, err := r.ReadByte()
+				if err != nil {
+					return nil, err
+				}
+
+				if isCharSyntax(char) {
+					continue
+				}
+
+				if !isCharValidBeginObj(char) {
+					// DELETE
+					// fmt.Println("invalid arr", string([]byte{char}))
+					return nil, errInvalid
+				}
+
+				r.UnreadByte()
+
+				// Try to parse string
+				if str, err := parseStr(r); err != nil {
+					if err == errInvalid {
+						return nil, errInvalid
+					}
+
+					if err == io.EOF {
+						return nil, err
+					}
+
+					if err == errUnmatch {
+						r.UnreadByte()
+					}
+				} else if err != nil {
+					return nil, err
+				} else {
+					raw.pushBytes(str.Raw.Bytes())
+					json.Vals = append(json.Vals, str)
+					valFound = true
+					continue
+				}
+
+				// Try to parse numeric
+				if num, err := parseNum(r); err != nil {
+					if err == errInvalid {
+						return nil, errInvalid
+					}
+
+					if err == io.EOF {
+						return nil, err
+					}
+
+					if err == errUnmatch {
+						r.UnreadByte()
+					}
+				} else if err != nil {
+					return nil, err
+				} else {
+					raw.pushBytes(num.Raw.Bytes())
+					json.Vals = append(json.Vals, num)
+					valFound = true
+					continue
+				}
+
+				// Try to parse bool
+				if bl, err := parseBool(r); err != nil {
+					if err == errInvalid {
+						return nil, errInvalid
+					}
+
+					if err == io.EOF {
+						return nil, err
+					}
+
+					if err == errUnmatch {
+						r.UnreadByte()
+					}
+				} else if err != nil {
+					return nil, err
+				} else {
+					raw.pushBytes(bl.Raw.Bytes())
+					json.Vals = append(json.Vals, bl)
+					valFound = true
+					continue
+				}
+
+				// Try to parse null
+				if nl, err := parseNull(r); err != nil {
+					if err == errInvalid {
+						return nil, errInvalid
+					}
+
+					if err == io.EOF {
+						return nil, err
+					}
+
+					if err == errUnmatch {
+						r.UnreadByte()
+					}
+				} else if err != nil {
+					return nil, err
+				} else {
+					raw.pushBytes(nl.Raw.Bytes())
+					json.Vals = append(json.Vals, nl)
+					valFound = true
+					continue
+				}
+
+				// Try to parse array
+				if arr, err := parseArray(r); err != nil {
+					if err == errInvalid {
+						return nil, errInvalid
+					}
+
+					if err == io.EOF {
+						return nil, err
+					}
+
+					if err == errUnmatch {
+						r.UnreadByte()
+					}
+				} else if err != nil {
+					return nil, err
+				} else {
+					raw.pushBytes(arr.Raw.Bytes())
+					json.Vals = append(json.Vals, arr)
+					valFound = true
+					continue
+				}
+
+				// Try to parse object
+				if obj, err := parseObj(r); err != nil {
+					if err == errInvalid {
+						return nil, errInvalid
+					}
+
+					if err == io.EOF {
+						return nil, err
+					}
+
+					if err == errUnmatch {
+						r.UnreadByte()
+					}
+				} else if err != nil {
+					return nil, err
+				} else {
+					raw.pushBytes(obj.Raw.Bytes())
+					json.Vals = append(json.Vals, obj)
+					valFound = true
+					continue
+				}
+			}
+
+			if valFound {
+				char, err := r.ReadByte()
+				if err != nil {
+					return nil, err
+				}
+
+				if isCharSyntax(char) {
+					continue
+				}
+
+				if char == coma {
+					raw.push(char)
+					valFound = false
+					continue
+				}
+
+				if char == closeBrack {
+					raw.push(char)
+					return json, nil
+				}
+
+				return nil, errInvalid
+			}
+		}
+	}
+
 	return nil, errUnmatch
 }
