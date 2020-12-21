@@ -4,30 +4,38 @@
 package jsonextract
 
 import (
-	"bytes"
 	"io"
 	"os"
 )
 
-// JSONFromStr extract every possible JSONs from a string
-func JSONFromStr(data string) ([][]byte, error) {
-	byts := []byte(data)
-	return JSONFromBytes(byts)
+// Option determine what kind of objects should be parsed
+type Option struct {
+	ParseInt   bool
+	ParseFloat bool
+	ParseBool  bool
+	ParseObj   bool
+	ParseArray bool
+	ParseNull  bool
 }
 
-// JSONFromBytes extract every possible JSONs in an array of bytes
-func JSONFromBytes(str []byte) ([][]byte, error) {
-	reader := bytes.NewReader(str)
-	return parse(reader)
+// FromBytes extract JSONs from bytes
+func FromBytes(byts []byte) ([]*JSON, error) {
+	r := readFromBytes(byts)
+	return parse(r)
 }
 
-// JSONFromReader extract every possible JSONs in a io.Reader
-func JSONFromReader(reader io.Reader) ([][]byte, error) {
-	return parse(reader)
+// FromReader extract JSONs from reader io.Reader
+func FromReader(reader io.Reader) ([]*JSON, error) {
+	r, err := readFromReader(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return parse(r)
 }
 
-// JSONFromFile extract every possible JSONs in a file in path
-func JSONFromFile(path string) ([][]byte, error) {
+// FromFile extract JSONs from file in path
+func FromFile(path string) ([]*JSON, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -35,5 +43,10 @@ func JSONFromFile(path string) ([][]byte, error) {
 
 	defer f.Close()
 
-	return JSONFromReader(f)
+	r, err := readFromReader(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return parse(r)
 }

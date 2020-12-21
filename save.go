@@ -5,16 +5,16 @@ import (
 )
 
 // SaveToPath save extracted JSONs to a file path
-func SaveToPath(data [][]byte, path string) error {
+func SaveToPath(data []*JSON, path string) error {
 	return save(data, path)
 }
 
 // Save save extracted JSONs to ./extracted_jsons.json
-func Save(data [][]byte) error {
+func Save(data []*JSON) error {
 	return save(data, "./extracted_jsons.json")
 }
 
-func save(data [][]byte, path string) error {
+func save(data []*JSON, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func save(data [][]byte, path string) error {
 	c := len(data)
 	if c > 0 {
 		for i, d := range data {
-			rest = append(rest, d...)
+			rest = append(rest, d.Raw.Bytes()...)
 			if i == c-1 {
 				rest = append(rest, 93)
 			} else {
