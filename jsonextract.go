@@ -3,10 +3,7 @@
 // This package did not guarantee 100% success rate of parsing, so it is highly recommended to check if the JSONs that you get is valid
 package jsonextract
 
-import (
-	"io"
-	"os"
-)
+import "os"
 
 // Option determine what kind of objects should be parsed
 type Option struct {
@@ -18,21 +15,21 @@ type Option struct {
 	ParseNull  bool
 }
 
-// FromBytes extract JSONs from bytes
-func FromBytes(byts []byte) ([]*JSON, error) {
-	r := readFromBytes(byts)
-	return parse(r)
-}
+// // FromBytes extract JSONs from bytes
+// func FromBytes(byts []byte) ([]*JSON, error) {
+// 	r := readFromBytes(byts)
+// 	return runParser(r)
+// }
 
-// FromReader extract JSONs from reader io.Reader
-func FromReader(reader io.Reader) ([]*JSON, error) {
-	r, err := readFromReader(reader)
-	if err != nil {
-		return nil, err
-	}
+// // FromReader extract JSONs from reader io.Reader
+// func FromReader(reader io.Reader) ([]*JSON, error) {
+// 	r, err := readFromReader(reader)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return parse(r)
-}
+// 	return runParser(r)
+// }
 
 // FromFile extract JSONs from file in path
 func FromFile(path string) ([]*JSON, error) {
@@ -48,5 +45,5 @@ func FromFile(path string) ([]*JSON, error) {
 		return nil, err
 	}
 
-	return parse(r)
+	return parseAll(r)
 }
