@@ -10,13 +10,6 @@ v2 is here! Features that included in this release:
 - Preprocessed JSON, meaning that you can access the parsed JSON value directly without having to unmarshal the bytes!
 - Target desired JSON kind/type to be parsed, so no more bulky result with unwanted JSON
 
-# Update!
-
-v2 is in progress! the next version will 100% guarantee every single JSON that parsed is valid! Features that will be included are:
-
-- Preprocessed JSON, meaning that you can access the parsed JSON value directly without having to unmarshal the bytes!
-- Target desired JSON kind/type to be parsed, so no more bulky result with unwanted JSON
-
 ### Installation
 JSONExtract require Go v1.14 or higher
 
