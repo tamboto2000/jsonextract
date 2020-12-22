@@ -174,5 +174,17 @@ func parse(r reader) (*JSON, error) {
 		return arr, nil
 	}
 
+	// try to parse object
+	obj, err := parseObj(r)
+	if err != nil {
+		r.UnreadByte()
+
+		if err != errUnmatch {
+			return nil, err
+		}
+	} else {
+		return obj, nil
+	}
+
 	return nil, nil
 }
