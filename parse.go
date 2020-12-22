@@ -1,6 +1,8 @@
 package jsonextract
 
-import "io"
+import (
+	"io"
+)
 
 var (
 	openCurlBrack  = byte(123)
@@ -87,6 +89,49 @@ func parseAll(r reader) ([]*JSON, error) {
 		json, err := parse(r)
 		if err == nil {
 			jsons = append(jsons, json)
+		}
+
+		if err != nil && err == io.EOF {
+			break
+		}
+	}
+
+	return jsons, nil
+}
+
+// parse with selected JSON kind/type
+func parseWithOpt(r reader, opt Option) ([]*JSON, error) {
+	jsons := make([]*JSON, 0)
+	for {
+		json, err := parse(r)
+		if err == nil {
+			if json.Kind == String && opt.ParseStr {
+				jsons = append(jsons, json)
+			}
+
+			if json.Kind == Int && opt.ParseInt {
+				jsons = append(jsons, json)
+			}
+
+			if json.Kind == Float && opt.ParseFloat {
+				jsons = append(jsons, json)
+			}
+
+			if json.Kind == Boolean && opt.ParseBool {
+				jsons = append(jsons, json)
+			}
+
+			if json.Kind == Null && opt.ParseNull {
+				jsons = append(jsons, json)
+			}
+
+			if json.Kind == Array && opt.ParseArray {
+				jsons = append(jsons, json)
+			}
+
+			if json.Kind == Object && opt.ParseObj {
+				jsons = append(jsons, json)
+			}
 		}
 
 		if err != nil && err == io.EOF {

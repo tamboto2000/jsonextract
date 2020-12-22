@@ -1,6 +1,8 @@
 package jsonextract
 
-import "bytes"
+import (
+	"bytes"
+)
 
 func parseObj(r reader) (*JSON, error) {
 	char, err := r.ReadByte()
