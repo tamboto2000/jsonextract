@@ -150,5 +150,17 @@ func parse(r reader) (*JSON, error) {
 		return bl, nil
 	}
 
+	// try to parse null
+	nl, err := parseNull(r)
+	if err != nil {
+		r.UnreadByte()
+
+		if err != errUnmatch {
+			return nil, err
+		}
+	} else {
+		return nl, nil
+	}
+
 	return nil, nil
 }
