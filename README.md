@@ -1,6 +1,6 @@
 # JSONExtract
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/tamboto2000/jsonextract.svg)](https://pkg.go.dev/github.com/tamboto2000/jsonextract)
+[![Go Reference](https://pkg.go.dev/badge/github.com/tamboto2000/jsonextract.svg)](https://pkg.go.dev/github.com/tamboto2000/jsonextract/v2)
 
 Package jsonextract is a library for extracting JSON from a given source, such as string, bytes, file, and io.Reader
 
