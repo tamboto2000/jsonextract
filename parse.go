@@ -117,11 +117,11 @@ func parse(r reader) (*JSON, error) {
 	// try to parse string
 	str, err := parseStr(r)
 	if err != nil {
+		r.UnreadByte()
+
 		if err != errUnmatch {
 			return nil, err
 		}
-
-		r.UnreadByte()
 	} else {
 		return str, nil
 	}
@@ -129,13 +129,25 @@ func parse(r reader) (*JSON, error) {
 	// try to parse numeric
 	num, err := parseNum(r)
 	if err != nil {
+		r.UnreadByte()
+
 		if err != errUnmatch {
 			return nil, err
 		}
-
-		r.UnreadByte()
 	} else {
 		return num, nil
+	}
+
+	// try to parse boolean
+	bl, err := parseBool(r)
+	if err != nil {
+		r.UnreadByte()
+
+		if err != errUnmatch {
+			return nil, err
+		}
+	} else {
+		return bl, nil
 	}
 
 	return nil, nil
