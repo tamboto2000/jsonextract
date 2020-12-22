@@ -9,7 +9,6 @@ Package jsonextract is a small library for extracting JSON from a string, it ext
 v2 is in progress! the next version will 100% guarantee every single JSON that parsed is valid! Features that will be included are:
 
 - Preprocessed JSON, meaning that you can access the parsed JSON value directly without having to unmarshal the bytes!
-- Directly unmarshal the raw JSON to supported arbitary types!, like int, int64, float64, struct, etc., no need to call encoding/json
 - Target desired JSON kind/type to be parsed, so no more bulky result with unwanted JSON
 
 ### Installation
