@@ -1,33 +1,58 @@
-// Package jsonextract is a small library for extracting JSON from a string, it extract a possible valid JSONs from a string or text.
-// Right now only latin characters (a-z, A-Z, 0-9) are supported.
-// This package did not guarantee 100% success rate of parsing, so it is highly recommended to check if the JSONs that you get is valid
+// Package jsonextract is a library for extracting any valid JSONs from given source
 package jsonextract
 
 import (
-	"bytes"
 	"io"
 	"os"
 )
 
-// JSONFromStr extract every possible JSONs from a string
-func JSONFromStr(data string) ([][]byte, error) {
-	byts := []byte(data)
-	return JSONFromBytes(byts)
+// Option determine what kind of objects should be parsed
+type Option struct {
+	ParseStr   bool
+	ParseInt   bool
+	ParseFloat bool
+	ParseBool  bool
+	ParseObj   bool
+	ParseArray bool
+	ParseNull  bool
 }
 
-// JSONFromBytes extract every possible JSONs in an array of bytes
-func JSONFromBytes(str []byte) ([][]byte, error) {
-	reader := bytes.NewReader(str)
-	return parse(reader)
+// DefaultOption default option for parsing, set all to true
+// to parse all kind of JSON
+var DefaultOption = Option{
+	ParseStr:   true,
+	ParseInt:   true,
+	ParseFloat: true,
+	ParseBool:  true,
+	ParseObj:   true,
+	ParseArray: true,
+	ParseNull:  true,
 }
 
-// JSONFromReader extract every possible JSONs in a io.Reader
-func JSONFromReader(reader io.Reader) ([][]byte, error) {
-	return parse(reader)
+// FromString extract JSONs from string
+func FromString(str string) ([]*JSON, error) {
+	r := readFromString(str)
+	return parseAll(r)
 }
 
-// JSONFromFile extract every possible JSONs in a file in path
-func JSONFromFile(path string) ([][]byte, error) {
+// FromBytes extract JSONs from bytes
+func FromBytes(byts []byte) ([]*JSON, error) {
+	r := readFromBytes(byts)
+	return parseAll(r)
+}
+
+// FromReader extract JSONs from reader io.Reader
+func FromReader(reader io.Reader) ([]*JSON, error) {
+	r, err := readFromReader(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseAll(r)
+}
+
+// FromFile extract JSONs from file in path
+func FromFile(path string) ([]*JSON, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -35,5 +60,49 @@ func JSONFromFile(path string) ([][]byte, error) {
 
 	defer f.Close()
 
-	return JSONFromReader(f)
+	r, err := readFromReader(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseAll(r)
+}
+
+// FromStringWithOpt extract JSONs from string with options
+func FromStringWithOpt(str string, opt Option) ([]*JSON, error) {
+	r := readFromString(str)
+	return parseWithOpt(r, opt)
+}
+
+// FromBytesWithOpt extract JSONs from bytes with options
+func FromBytesWithOpt(byts []byte, opt Option) ([]*JSON, error) {
+	r := readFromBytes(byts)
+	return parseWithOpt(r, opt)
+}
+
+// FromReaderWithOpt extract JSONs from reader io.Reader with options
+func FromReaderWithOpt(reader io.Reader) ([]*JSON, error) {
+	r, err := readFromReader(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseAll(r)
+}
+
+// FromFileWithOpt extract JSONs from file in path with options
+func FromFileWithOpt(path string, opt Option) ([]*JSON, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	r, err := readFromReader(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseWithOpt(r, opt)
 }

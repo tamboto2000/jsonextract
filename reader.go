@@ -1,45 +1,33 @@
 package jsonextract
 
-import "io"
+import (
+	"bytes"
+	"io"
+	"strings"
+)
 
-type reader struct {
-	r        io.Reader
-	byt      []byte
-	err      error
-	isUnread bool
+type reader interface {
+	ReadByte() (byte, error)
+	UnreadByte() error
 }
 
-// bytes reader
-func newReader(r io.Reader) *reader {
-	return &reader{
-		byt: make([]byte, 1),
-		r:   r,
-	}
+func readFromBytes(byts []byte) reader {
+	buff := bytes.NewReader(byts)
+
+	return buff
 }
 
-func (r *reader) next() bool {
-	if r.isUnread {
-		return true
-	}
-
-	_, err := r.r.Read(r.byt)
-	if err != nil {
-		r.err = err
-
-		return false
-	}
-
-	return true
+func readFromString(str string) reader {
+	rdr := strings.NewReader(str)
+	return rdr
 }
 
-func (r *reader) get() byte {
-	if r.isUnread {
-		r.isUnread = false
+func readFromReader(r io.Reader) (reader, error) {
+	init := make([]byte, 0)
+	buff := bytes.NewBuffer(init)
+	if _, err := buff.ReadFrom(r); err != nil {
+		return nil, err
 	}
 
-	return r.byt[0]
-}
-
-func (r *reader) unread() {
-	r.isUnread = true
+	return buff, nil
 }
