@@ -46,7 +46,6 @@ func parseStr(r reader) (*JSON, error) {
 				}
 
 				json.Val = *strVal
-
 				return json, nil
 			}
 

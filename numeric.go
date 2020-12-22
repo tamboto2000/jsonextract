@@ -1,6 +1,9 @@
 package jsonextract
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 // pre-process numeric
 func parseNum(r reader) (*JSON, error) {
@@ -25,19 +28,59 @@ func parseNum(r reader) (*JSON, error) {
 
 		raw.push(char)
 		// if char is num 0, verify if the char after is '.', like 0.3, 0.1, etc.,
-		// the only valid numeric format with zero beginning is floating point, or just zero
+		// the only valid numeric format with zero beginning is floating point, just zero, or exponent
 		if char == 48 {
 			char, err := r.ReadByte()
 			if err != nil {
 				return nil, err
 			}
 
-			if char != dot {
+			// if char != dot {
+			// 	return nil, errInvalid
+			// }
+
+			if char == dot {
+				raw.push(char)
+				char, err := r.ReadByte()
+				if err != nil {
+					return nil, err
+				}
+
+				if !isCharNumber(char) {
+					return nil, errInvalid
+				}
+
+				r.UnreadByte()
+				json.Kind = Float
+			} else if isCharExponent(char) {
+				raw.push(char)
+				for i := 0; i < 2; i++ {
+					char, err := r.ReadByte()
+					if err != nil {
+						return nil, err
+					}
+
+					if i == 0 {
+						if char != minus && char != plus {
+							return nil, errInvalid
+						}
+
+						raw.push(char)
+					}
+
+					if i == 1 {
+						if !isCharNumber(char) {
+							return nil, errInvalid
+						}
+
+						raw.push(char)
+					}
+				}
+
+				json.WithExponent = true
+			} else {
 				return nil, errInvalid
 			}
-
-			raw.push(char)
-			json.Kind = Float
 		}
 
 		return parseNumVal(json, r)
@@ -47,7 +90,7 @@ func parseNum(r reader) (*JSON, error) {
 		raw.push(char)
 
 		// if char is num 0, verify if the char after is '.', like 0.3, 0.1, etc.,
-		// the only valid numeric format with zero beginning is floating point, or just zero
+		// the only valid numeric format with zero beginning is floating point, just zero, or exponent
 		if char == 48 {
 			char, err := r.ReadByte()
 			if err != nil {
@@ -60,7 +103,43 @@ func parseNum(r reader) (*JSON, error) {
 				return json, nil
 			} else if char == dot {
 				raw.push(char)
+				char, err := r.ReadByte()
+				if err != nil {
+					return nil, err
+				}
+
+				if !isCharNumber(char) {
+					return nil, errInvalid
+				}
+
+				r.UnreadByte()
 				json.Kind = Float
+			} else if isCharExponent(char) {
+				raw.push(char)
+				for i := 0; i < 2; i++ {
+					char, err := r.ReadByte()
+					if err != nil {
+						return nil, err
+					}
+
+					if i == 0 {
+						if char != minus && char != plus {
+							return nil, errInvalid
+						}
+
+						raw.push(char)
+					}
+
+					if i == 1 {
+						if !isCharNumber(char) {
+							return nil, errInvalid
+						}
+
+						raw.push(char)
+					}
+				}
+
+				json.WithExponent = true
 			} else {
 				return nil, errInvalid
 			}
@@ -84,17 +163,34 @@ func parseNumVal(num *JSON, r reader) (*JSON, error) {
 			if char == closeBrack || char == closeCurlBrack ||
 				char == coma || isCharSyntax(char) {
 				if num.Kind == Int {
-					i, err := strconv.Atoi(string(num.Raw.Bytes()))
-					if err != nil {
-						return nil, err
-					}
+					if num.WithExponent {
+						byts := convertExponentToParseable(num.Raw.byts)
+						i, err := strconv.ParseFloat(string(byts), 64)
+						if err != nil {
+							// DELETE
+							// fmt.Println("parse num error:", err.Error(), string(num.Raw.byts))
+							return nil, err
+						}
 
-					num.Val = i
+						num.Val = int(i)
+					} else {
+						i, err := strconv.Atoi(string(num.Raw.Bytes()))
+						if err != nil {
+							// DELETE
+							// fmt.Println("parse num error:", err.Error(), string(num.Raw.byts))
+
+							return nil, err
+						}
+
+						num.Val = i
+					}
 				}
 
 				if num.Kind == Float {
 					i, err := strconv.ParseFloat(string(num.Raw.Bytes()), 64)
 					if err != nil {
+						// DELETE
+						fmt.Println("parse num error:", err.Error(), string(num.Raw.byts))
 						return nil, err
 					}
 
@@ -112,6 +208,39 @@ func parseNumVal(num *JSON, r reader) (*JSON, error) {
 
 				num.Kind = Float
 				num.Raw.push(char)
+				continue
+			}
+
+			if isCharExponent(char) {
+				if num.WithExponent {
+					return nil, errInvalid
+				}
+
+				num.Raw.push(char)
+				for i := 0; i < 2; i++ {
+					char, err := r.ReadByte()
+					if err != nil {
+						return nil, err
+					}
+
+					if i == 0 {
+						if char != minus && char != plus {
+							return nil, errInvalid
+						}
+
+						num.Raw.push(char)
+					}
+
+					if i == 1 {
+						if !isCharNumber(char) {
+							return nil, errInvalid
+						}
+
+						num.Raw.push(char)
+					}
+				}
+
+				num.WithExponent = true
 				continue
 			}
 

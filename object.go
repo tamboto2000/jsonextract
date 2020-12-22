@@ -1,5 +1,7 @@
 package jsonextract
 
+import "bytes"
+
 func parseObj(r reader) (*JSON, error) {
 	char, err := r.ReadByte()
 	if err != nil {
@@ -12,33 +14,40 @@ func parseObj(r reader) (*JSON, error) {
 		raw.push(char)
 
 		for {
-			key, val, err := parseObjKeyVal(r)
+			char, err := r.ReadByte()
 			if err != nil {
 				return nil, err
 			}
 
-			json.KeyVal[key] = val
-			raw.pushBytes([]byte(`"` + key + `":`))
-			raw.pushBytes(val.Raw.byts)
-
-			for {
-				char, err := r.ReadByte()
+			// possible begin key
+			if char == quot {
+				r.UnreadByte()
+				key, val, err := parseObjKeyVal(r)
 				if err != nil {
 					return nil, err
 				}
 
-				if char == coma {
-					raw.push(char)
-					break
-				}
-
-				if char == closeCurlBrack {
-					raw.push(char)
-					return json, nil
-				}
-
-				return nil, errInvalid
+				json.KeyVal[key] = val
+				raw.pushBytes([]byte(`"` + key + `":`))
+				raw.pushBytes(val.Raw.byts)
+				continue
 			}
+
+			if char == coma {
+				raw.push(char)
+				continue
+			}
+
+			if char == closeCurlBrack {
+				raw.push(char)
+				return json, nil
+			}
+
+			if isCharSyntax(char) {
+				continue
+			}
+
+			return nil, errInvalid
 		}
 	}
 
@@ -88,14 +97,17 @@ func parseObjKey(r reader) (string, error) {
 			continue
 		}
 
+		// begin key indicator
 		if char == quot {
 			r.UnreadByte()
 			val, err := parseStr(r)
 			if err != nil {
+				// DELETE
+				// fmt.Println("invalid key", string([]byte{char}))
 				return "", err
 			}
 
-			keyStr := val.Val.(string)
+			keyStr := bytes.Trim(val.Raw.byts, `"`)
 			// find terminator (:)
 			for {
 				char, err := r.ReadByte()
@@ -108,7 +120,7 @@ func parseObjKey(r reader) (string, error) {
 				}
 
 				if char == colon {
-					return keyStr, nil
+					return string(keyStr), nil
 				}
 
 				break

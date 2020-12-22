@@ -1,5 +1,9 @@
 package jsonextract
 
+import (
+	"strings"
+)
+
 func isCharLetter(char byte) bool {
 	for _, c := range letters {
 		if char == c {
@@ -116,4 +120,38 @@ func escapeChar(char byte) []byte {
 	}
 
 	return nil
+}
+
+func isCharExponent(char byte) bool {
+	for _, c := range exponentChar {
+		if char == c {
+			return true
+		}
+	}
+
+	return false
+}
+
+// apparently in json, something like 1e+1 is valid, but when parse is not,
+// the equal valid form is 1.0e+1
+func convertExponentToParseable(chars []byte) []byte {
+	decimalFound := false
+	for _, char := range chars {
+		if char == dot {
+			// DELETE
+			// fmt.Println(string(chars))
+
+			decimalFound = true
+			return chars
+		}
+
+		if isCharExponent(char) && !decimalFound {
+			chars = []byte(strings.Replace(string(chars), "e", ".0e", 1))
+			// DELETE
+			// fmt.Println(string(chars))
+			return chars
+		}
+	}
+
+	return chars
 }

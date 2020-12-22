@@ -13,18 +13,20 @@ var (
 	backSlash      = byte(92)
 	slash          = byte(47)
 	minus          = byte(45)
+	plus           = byte(43)
 	dot            = byte(46)
 )
 
 var (
 	letters   = []byte{97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90}
 	numbers   = []byte{49, 50, 51, 52, 53, 54, 55, 56, 57, 48}
-	escapable = []byte{97, 98, 116, 110, 118, 102, 114, slash, backSlash, quot}
+	escapable = []byte{97, 98, 116, 110, 118, 102, 114, 117, slash, backSlash, quot}
 	// "\a\b\t\n\v\f\r "
-	syntax   = []byte{7, 8, 9, 10, 11, 12, 13, 32}
-	nullStr  = []byte{110, 117, 108, 108}
-	trueStr  = []byte{116, 114, 117, 101}
-	falseStr = []byte{102, 97, 108, 115, 101}
+	syntax       = []byte{7, 8, 9, 10, 11, 12, 13, 32}
+	nullStr      = []byte{110, 117, 108, 108}
+	trueStr      = []byte{116, 114, 117, 101}
+	falseStr     = []byte{102, 97, 108, 115, 101}
+	exponentChar = []byte{101, 69}
 )
 
 // Kind represent JSON kind or type
@@ -64,7 +66,10 @@ func (r *Raw) pushBytes(byts []byte) {
 
 // JSON contains JSON data and its kind
 type JSON struct {
+	// JSON kind/type
 	Kind Kind
+	// Only apply to Int and Float
+	WithExponent bool
 	// Key and value pair, like "key" : "val", only assigned when Kind == Object
 	KeyVal map[string]*JSON
 	// Values for Array, only assigned if Kind == Array
