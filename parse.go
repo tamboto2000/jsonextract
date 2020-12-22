@@ -27,6 +27,7 @@ var (
 	trueStr      = []byte{116, 114, 117, 101}
 	falseStr     = []byte{102, 97, 108, 115, 101}
 	exponentChar = []byte{101, 69}
+	hexChars     = []byte{49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 97, 98, 99, 100, 101, 102}
 )
 
 // Kind represent JSON kind or type

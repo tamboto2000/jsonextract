@@ -33,6 +33,23 @@ func parseStr(r reader) (*JSON, error) {
 				}
 
 				raw.push(char)
+
+				// unicode
+				if char == 117 {
+					for i := 0; i < 4; i++ {
+						char, err := r.ReadByte()
+						if err != nil {
+							return nil, err
+						}
+
+						if !isCharHex(char) {
+							return nil, errInvalid
+						}
+
+						raw.push(char)
+					}
+				}
+
 				continue
 			}
 

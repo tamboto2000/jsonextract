@@ -143,10 +143,20 @@ func convertExponentToParseable(chars []byte) []byte {
 		}
 
 		if isCharExponent(char) && !decimalFound {
-			chars = []byte(strings.Replace(string(chars), "e", ".0e", 1))			
+			chars = []byte(strings.Replace(string(chars), "e", ".0e", 1))
 			return chars
 		}
 	}
 
 	return chars
+}
+
+func isCharHex(char byte) bool {
+	for _, c := range hexChars {
+		if char == c {
+			return true
+		}
+	}
+
+	return false
 }
