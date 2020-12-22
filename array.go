@@ -12,21 +12,20 @@ func parseArr(r reader) (*JSON, error) {
 		raw.push(char)
 
 		for {
-			val, err := parseArrayVal(r)
-			if err != nil {
-				return nil, err
-			}
-
-			raw.pushBytes(val.Raw.byts)
-			json.Vals = append(json.Vals, val)
-
 			char, err := r.ReadByte()
 			if err != nil {
 				return nil, err
 			}
 
-			if char == coma {
-				raw.push(char)
+			if isCharValidBeginObj(char) {
+				r.UnreadByte()
+				val, err := parseArrayVal(r)
+				if err != nil {
+					return nil, err
+				}
+
+				raw.pushBytes(val.Raw.byts)
+				json.Vals = append(json.Vals, val)
 				continue
 			}
 
@@ -34,6 +33,17 @@ func parseArr(r reader) (*JSON, error) {
 				raw.push(char)
 				return json, nil
 			}
+
+			if char == coma {
+				raw.push(char)
+				continue
+			}
+
+			if isCharSyntax(char) {
+				continue
+			}
+
+			return nil, errInvalid
 		}
 	}
 
