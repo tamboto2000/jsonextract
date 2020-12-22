@@ -162,5 +162,17 @@ func parse(r reader) (*JSON, error) {
 		return nl, nil
 	}
 
+	// try to parse array
+	arr, err := parseArr(r)
+	if err != nil {
+		r.UnreadByte()
+
+		if err != errUnmatch {
+			return nil, err
+		}
+	} else {
+		return arr, nil
+	}
+
 	return nil, nil
 }
