@@ -31,16 +31,3 @@ func readFromReader(r io.Reader) (reader, error) {
 
 	return buff, nil
 }
-
-// UnreadByte wrapper, excluding io.EOF
-func unreadByteExcludeEOF(r reader) error {
-	if err := r.UnreadByte(); err != nil {
-		if err == io.EOF {
-			return nil
-		}
-
-		return err
-	}
-
-	return nil
-}
