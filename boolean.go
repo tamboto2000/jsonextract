@@ -58,5 +58,5 @@ func parseBool(r reader) (*JSON, error) {
 		return json, nil
 	}
 
-	return nil, errInvalid
+	return nil, errUnmatch
 }
