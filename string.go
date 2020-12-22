@@ -29,8 +29,6 @@ func parseStr(r reader) (*JSON, error) {
 				}
 
 				if !isCharEscapable(char) {
-					// DELETE
-					// fmt.Println("invalid str", string([]byte{char}))
 					return nil, errInvalid
 				}
 

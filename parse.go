@@ -55,8 +55,6 @@ func (r *Raw) Bytes() []byte {
 }
 
 func (r *Raw) push(byt byte) {
-	// DELETE
-	// fmt.Println(string([]byte{byt}))
 	r.byts = append(r.byts, byt)
 }
 

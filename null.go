@@ -7,8 +7,6 @@ func parseNull(r reader) (*JSON, error) {
 	}
 
 	if char == 110 {
-		// DELETE
-		// fmt.Println(string([]byte{char}))
 		raw := new(Raw)
 		json := &JSON{Kind: Null, Raw: raw}
 		raw.push(char)
@@ -23,9 +21,7 @@ func parseNull(r reader) (*JSON, error) {
 				return nil, err
 			}
 
-			if char != c {
-				// DELETE
-				// fmt.Println(string([]byte{char}))
+			if char != c {				
 				return nil, errInvalid
 			}
 

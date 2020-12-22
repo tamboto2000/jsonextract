@@ -138,17 +138,12 @@ func convertExponentToParseable(chars []byte) []byte {
 	decimalFound := false
 	for _, char := range chars {
 		if char == dot {
-			// DELETE
-			// fmt.Println(string(chars))
-
 			decimalFound = true
 			return chars
 		}
 
 		if isCharExponent(char) && !decimalFound {
-			chars = []byte(strings.Replace(string(chars), "e", ".0e", 1))
-			// DELETE
-			// fmt.Println(string(chars))
+			chars = []byte(strings.Replace(string(chars), "e", ".0e", 1))			
 			return chars
 		}
 	}

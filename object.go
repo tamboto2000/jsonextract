@@ -102,8 +102,6 @@ func parseObjKey(r reader) (string, error) {
 			r.UnreadByte()
 			val, err := parseStr(r)
 			if err != nil {
-				// DELETE
-				// fmt.Println("invalid key", string([]byte{char}))
 				return "", err
 			}
 
