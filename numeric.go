@@ -25,7 +25,7 @@ func parseNum(r reader) (*JSON, error) {
 
 		raw.push(char)
 		// if char is num 0, verify if the char after is '.', like 0.3, 0.1, etc.,
-		// the only valid numeric format with zero beginning is floating point
+		// the only valid numeric format with zero beginning is floating point, or just zero
 		if char == 48 {
 			char, err := r.ReadByte()
 			if err != nil {
@@ -47,19 +47,23 @@ func parseNum(r reader) (*JSON, error) {
 		raw.push(char)
 
 		// if char is num 0, verify if the char after is '.', like 0.3, 0.1, etc.,
-		// the only valid numeric format with zero beginning is floating point
+		// the only valid numeric format with zero beginning is floating point, or just zero
 		if char == 48 {
 			char, err := r.ReadByte()
 			if err != nil {
 				return nil, err
 			}
 
-			if char != dot {
+			if char == closeBrack || char == closeCurlBrack ||
+				char == coma || isCharSyntax(char) {
+				r.UnreadByte()
+				return json, nil
+			} else if char == dot {
+				raw.push(char)
+				json.Kind = Float
+			} else {
 				return nil, errInvalid
 			}
-
-			raw.push(char)
-			json.Kind = Float
 		}
 
 		return parseNumVal(json, r)
