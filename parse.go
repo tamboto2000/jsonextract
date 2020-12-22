@@ -69,7 +69,7 @@ type JSON struct {
 	KeyVal map[string]*JSON
 	// Values for Array, only assigned if Kind == Array
 	Vals []*JSON
-	// If data is just a single object, like Int, Float, Boolen, not Object nor Array
+	// If data is just a single object, like Int, Float, Boolean, not Object nor Array
 	Val interface{}
 
 	// Stores raw JSON bytes
