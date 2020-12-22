@@ -1,6 +1,8 @@
 package jsonextract
 
-import "bytes"
+import (
+	jsonenc "encoding/json"
+)
 
 func parseStr(r reader) (*JSON, error) {
 	char, err := r.ReadByte()
@@ -36,9 +38,13 @@ func parseStr(r reader) (*JSON, error) {
 
 			if char == quot {
 				raw.push(char)
-				byts := bytes.TrimLeft(raw.byts, `"`)
-				byts = bytes.TrimRight(byts, `"`)
-				json.Val = string(byts)
+				strVal := new(string)
+				if err := jsonenc.Unmarshal(raw.byts, strVal); err != nil {
+					return nil, err
+				}
+
+				json.Val = *strVal
+
 				return json, nil
 			}
 

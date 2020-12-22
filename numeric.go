@@ -1,5 +1,7 @@
 package jsonextract
 
+import "strconv"
+
 // pre-process numeric
 func parseNum(r reader) (*JSON, error) {
 	char, err := r.ReadByte()
@@ -77,6 +79,24 @@ func parseNumVal(num *JSON, r reader) (*JSON, error) {
 		if !isCharNumber(char) {
 			if char == closeBrack || char == closeCurlBrack ||
 				char == coma || isCharSyntax(char) {
+				if num.Kind == Int {
+					i, err := strconv.Atoi(string(num.Raw.Bytes()))
+					if err != nil {
+						return nil, err
+					}
+
+					num.Val = i
+				}
+
+				if num.Kind == Float {
+					i, err := strconv.ParseFloat(string(num.Raw.Bytes()), 64)
+					if err != nil {
+						return nil, err
+					}
+
+					num.Val = i
+				}
+
 				r.UnreadByte()
 				return num, nil
 			}
