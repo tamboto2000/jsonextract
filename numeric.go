@@ -1,6 +1,7 @@
 package jsonextract
 
 import (
+	"io"
 	"strconv"
 )
 
@@ -155,6 +156,39 @@ func parseNumVal(num *JSON, r reader) (*JSON, error) {
 	for {
 		char, err := r.ReadByte()
 		if err != nil {
+			if err == io.EOF {
+				if num.Kind == Int {
+					if num.WithExponent {
+						byts := convertExponentToParseable(num.Raw.byts)
+						i, err := strconv.ParseFloat(string(byts), 64)
+						if err != nil {
+							return nil, err
+						}
+
+						num.Val = int(i)
+					} else {
+						i, err := strconv.Atoi(string(num.Raw.Bytes()))
+						if err != nil {
+							return nil, err
+						}
+
+						num.Val = i
+					}
+				}
+
+				if num.Kind == Float {
+					i, err := strconv.ParseFloat(string(num.Raw.Bytes()), 64)
+					if err != nil {
+						return nil, err
+					}
+
+					num.Val = i
+				}
+
+				r.UnreadByte()
+				return num, nil
+			}
+
 			return nil, err
 		}
 
