@@ -6,19 +6,26 @@ import (
 	"os"
 )
 
-// Option determine what kind of objects should be parsed
+// Option determine what kind of objects and with what criteria should be parsed
 type Option struct {
-	ParseStr   bool
-	ParseInt   bool
-	ParseFloat bool
-	ParseBool  bool
-	ParseObj   bool
-	ParseArray bool
-	ParseNull  bool
+	ParseStr         bool
+	ParseInt         bool
+	ParseFloat       bool
+	ParseBool        bool
+	ParseObj         bool
+	ParseArray       bool
+	ParseNull        bool
+	IgnoreEmptyStr   bool
+	IgnoreZeroInt    bool
+	IgnoreZeroFloat  bool
+	IgnoreFalseBool  bool
+	IgnoreTrueBool   bool
+	IgnoreEmptyObj   bool
+	IgnoreEmptyArray bool
+	IgnoreNull       bool
 }
 
-// DefaultOption default option for parsing, set all to true
-// to parse all kind of JSON
+// DefaultOption default option for parsing
 var DefaultOption = Option{
 	ParseStr:   true,
 	ParseInt:   true,
@@ -32,13 +39,13 @@ var DefaultOption = Option{
 // FromString extract JSONs from string
 func FromString(str string) ([]*JSON, error) {
 	r := readFromString(str)
-	return parseAll(r)
+	return runParser(r, DefaultOption)
 }
 
 // FromBytes extract JSONs from bytes
 func FromBytes(byts []byte) ([]*JSON, error) {
 	r := readFromBytes(byts)
-	return parseAll(r)
+	return runParser(r, DefaultOption)
 }
 
 // FromReader extract JSONs from reader io.Reader
@@ -48,7 +55,7 @@ func FromReader(reader io.Reader) ([]*JSON, error) {
 		return nil, err
 	}
 
-	return parseAll(r)
+	return runParser(r, DefaultOption)
 }
 
 // FromFile extract JSONs from file in path
@@ -65,29 +72,29 @@ func FromFile(path string) ([]*JSON, error) {
 		return nil, err
 	}
 
-	return parseAll(r)
+	return runParser(r, DefaultOption)
 }
 
 // FromStringWithOpt extract JSONs from string with options
 func FromStringWithOpt(str string, opt Option) ([]*JSON, error) {
 	r := readFromString(str)
-	return parseWithOpt(r, opt)
+	return runParser(r, opt)
 }
 
 // FromBytesWithOpt extract JSONs from bytes with options
 func FromBytesWithOpt(byts []byte, opt Option) ([]*JSON, error) {
 	r := readFromBytes(byts)
-	return parseWithOpt(r, opt)
+	return runParser(r, opt)
 }
 
 // FromReaderWithOpt extract JSONs from reader io.Reader with options
-func FromReaderWithOpt(reader io.Reader) ([]*JSON, error) {
+func FromReaderWithOpt(reader io.Reader, opt Option) ([]*JSON, error) {
 	r, err := readFromReader(reader)
 	if err != nil {
 		return nil, err
 	}
 
-	return parseAll(r)
+	return runParser(r, opt)
 }
 
 // FromFileWithOpt extract JSONs from file in path with options
@@ -104,5 +111,5 @@ func FromFileWithOpt(path string, opt Option) ([]*JSON, error) {
 		return nil, err
 	}
 
-	return parseWithOpt(r, opt)
+	return runParser(r, opt)
 }

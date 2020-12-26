@@ -82,54 +82,94 @@ type JSON struct {
 	Raw *Raw
 }
 
-// parse all detected JSON
-func parseAll(r reader) ([]*JSON, error) {
-	jsons := make([]*JSON, 0)
-	for {
-		json, err := parse(r)
-		if err == nil {
-			jsons = append(jsons, json)
-		}
-
-		if err != nil && err == io.EOF {
-			break
-		}
-	}
-
-	return jsons, nil
-}
-
-// parse with selected JSON kind/type
-func parseWithOpt(r reader, opt Option) ([]*JSON, error) {
+// start parsing!
+func runParser(r reader, opt Option) ([]*JSON, error) {
 	jsons := make([]*JSON, 0)
 	for {
 		json, err := parse(r)
 		if err == nil {
 			if json.Kind == String && opt.ParseStr {
+				if opt.IgnoreEmptyStr {
+					if json.Val.(string) != "" {
+						jsons = append(jsons, json)
+					}
+
+					continue
+				}
+
 				jsons = append(jsons, json)
 			}
 
 			if json.Kind == Int && opt.ParseInt {
+				if opt.IgnoreZeroInt {
+					if json.Val.(int) != 0 {
+						jsons = append(jsons, json)
+					}
+
+					continue
+				}
+
 				jsons = append(jsons, json)
 			}
 
 			if json.Kind == Float && opt.ParseFloat {
+				if opt.IgnoreZeroFloat {
+					if json.Val.(float64) != 0 {
+						jsons = append(jsons, json)
+					}
+
+					continue
+				}
+
 				jsons = append(jsons, json)
 			}
 
 			if json.Kind == Boolean && opt.ParseBool {
+				if opt.IgnoreTrueBool {
+					if json.Val.(bool) {
+						continue
+					}
+				}
+
+				if opt.IgnoreFalseBool {
+					if !json.Val.(bool) {
+						continue
+					}
+				}
+
 				jsons = append(jsons, json)
 			}
 
 			if json.Kind == Null && opt.ParseNull {
+				if !opt.IgnoreNull {
+					jsons = append(jsons, json)
+					continue
+				}
+
 				jsons = append(jsons, json)
 			}
 
 			if json.Kind == Array && opt.ParseArray {
+				if opt.IgnoreEmptyArray {
+					if len(json.Vals) > 0 {
+						jsons = append(jsons, json)
+					}
+
+					continue
+				}
+
 				jsons = append(jsons, json)
 			}
 
 			if json.Kind == Object && opt.ParseObj {
+				if opt.IgnoreEmptyObj {
+					if len(json.KeyVal) != 0 {
+						jsons = append(jsons, json)
+					}
+
+					continue
+				}
+
 				jsons = append(jsons, json)
 			}
 		}
