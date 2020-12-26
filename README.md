@@ -2,13 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/tamboto2000/jsonextract.svg)](https://pkg.go.dev/github.com/tamboto2000/jsonextract/v2)
 
-Package jsonextract is a library for extracting JSON from a given source, such as string, bytes, file, and io.Reader
-
-# Update!
-v2 is here! Features that included in this release:
-
-- Preprocessed JSON, meaning that you can access the parsed JSON value directly without having to unmarshal the bytes!
-- Target desired JSON kind/type to be parsed, so no more bulky result with unwanted JSON
+Package jsonextract is a library for extracting JSON from a given source, such as string, bytes, file, and io.Reader. Extract any valid JSON data from a source and retrieve the parsed data from extracted JSON. This library is created because of my frustation to extract and parse JSON from scraped HTML page. The main purpose of this library is to extract any valid JSON from provided source so you don't need to do the hassle for extracting valid JSON string with regexp and other black magick trough Demonic Entity summoning...
 
 ### Installation
 JSONExtract require Go v1.14 or higher
@@ -139,7 +133,7 @@ func main() {
 }
 ```
 
-See [Documentation](https://pkg.go.dev/github.com/tamboto2000/jsonextract) for more information
+See [Documentation](https://pkg.go.dev/github.com/tamboto2000/jsonextract) for more information. There's also some [examples](https://github.com/tamboto2000/jsonextract/tree/main/example) you can look up to 
 
 License
 ----
