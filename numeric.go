@@ -100,6 +100,7 @@ func parseNum(r reader) (*JSON, error) {
 			if char == closeBrack || char == closeCurlBrack ||
 				char == coma || isCharSyntax(char) {
 				r.UnreadByte()
+				json.Val = int(0)
 				return json, nil
 			} else if char == dot {
 				raw.push(char)
