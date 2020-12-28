@@ -1,6 +1,7 @@
 package jsonextract
 
 import (
+	jsonenc "encoding/json"
 	"io"
 )
 
@@ -80,6 +81,68 @@ type JSON struct {
 
 	// Stores raw JSON bytes
 	Raw *Raw
+}
+
+// ReParse reparsing JSON to JSON bytes. This is useful when you update some vals in the JSON and
+// want to update the JSON bytes stored in JSON.Raw
+func (j *JSON) ReParse() error {
+	if j.Kind == String || j.Kind == Int || j.Kind == Float || j.Kind == Boolean {
+		if j.Val != nil {
+			byts, err := jsonenc.Marshal(j.Val)
+			if err != nil {
+				return err
+			}
+
+			j.Raw.byts = byts
+		}
+	}
+
+	if j.Kind == Array {
+		if j.Vals != nil {
+			newByts := make([]byte, 0)
+			newByts = append(newByts, openBrack)
+			arrLen := len(j.Vals)
+			for i, val := range j.Vals {
+				if err := val.ReParse(); err != nil {
+					return err
+				}
+
+				newByts = append(newByts, val.Raw.byts...)
+				if i < arrLen-1 {
+					newByts = append(newByts, coma)
+				}
+			}
+
+			newByts = append(newByts, closeBrack)
+			j.Raw.byts = newByts
+		}
+	}
+
+	if j.Kind == Object {
+		if j.KeyVal != nil {
+			newByts := make([]byte, 0)
+			newByts = append(newByts, openCurlBrack)
+			objLen := len(j.KeyVal)
+			for key, val := range j.KeyVal {
+				objLen--
+				if err := val.ReParse(); err != nil {
+					return err
+				}
+
+				newByts = append(newByts, []byte(`"`+key+`":`)...)
+				newByts = append(newByts, val.Raw.byts...)
+
+				if objLen > 0 {
+					newByts = append(newByts, coma)
+				}
+			}
+
+			newByts = append(newByts, closeCurlBrack)
+			j.Raw.byts = newByts
+		}
+	}
+
+	return nil
 }
 
 // start parsing!
