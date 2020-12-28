@@ -84,7 +84,9 @@ type JSON struct {
 }
 
 // ReParse reparsing JSON to JSON bytes. This is useful when you update some vals in the JSON and
-// want to update the JSON bytes stored in JSON.Raw
+// want to update the JSON bytes stored in JSON.Raw.
+// Make sure the new value is the same as JSON.Kind, for example,
+// if JSON.Kind == Int, then assign int value, JSON.Val = 2
 func (j *JSON) ReParse() error {
 	if j.Kind == String || j.Kind == Int || j.Kind == Float || j.Kind == Boolean {
 		if j.Val != nil {
