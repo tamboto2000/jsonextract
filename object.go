@@ -64,7 +64,7 @@ func parseObj(r reader) (*JSON, error) {
 
 func parseKeyVal(r reader, json *JSON, objMap *objMap) error {
 	var id string
-	var rawId []rune
+	var rawID []rune
 
 	// find key
 	for {
@@ -91,7 +91,7 @@ func parseKeyVal(r reader, json *JSON, objMap *objMap) error {
 		}
 
 		id = str.val.(string)
-		rawId = str.raw
+		rawID = str.raw
 		break
 	}
 
@@ -114,7 +114,7 @@ func parseKeyVal(r reader, json *JSON, objMap *objMap) error {
 			return errInvalid
 		}
 
-		rawId = append(rawId, char)
+		rawID = append(rawID, char)
 		break
 	}
 
@@ -143,7 +143,7 @@ func parseKeyVal(r reader, json *JSON, objMap *objMap) error {
 		}
 
 		objMap.val[id] = val
-		json.pushRns(rawId)
+		json.pushRns(rawID)
 		json.pushRns(val.raw)
 		break
 	}
