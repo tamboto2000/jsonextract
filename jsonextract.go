@@ -1,7 +1,10 @@
 // Package jsonextract is a library for extracting any valid JSONs from given source
 package jsonextract
 
-import "os"
+import (
+	"io"
+	"os"
+)
 
 // // Option determine what kind of objects and with what criteria should be parsed
 // type Option struct {
@@ -45,15 +48,15 @@ func FromBytes(byts []byte) ([]*JSON, error) {
 	return parseAll(r)
 }
 
-// // FromReader extract JSONs from reader io.Reader
-// func FromReader(reader io.Reader) ([]*JSON, error) {
-// 	r, err := readFromReader(reader)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+// FromReader extract JSONs from reader io.Reader
+func FromReader(reader io.Reader) ([]*JSON, error) {
+	r, err := readFromReader(reader)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return runParser(r, DefaultOption)
-// }
+	return parseAll(r)
+}
 
 // FromFile extract JSONs from file in path
 func FromFile(path string) ([]*JSON, error) {
