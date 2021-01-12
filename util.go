@@ -1,11 +1,34 @@
 package jsonextract
 
 import (
-	"strings"
+	"io"
+	"strconv"
+	"unicode"
+	"unicode/utf8"
 )
 
-func isCharLetter(char byte) bool {
-	for _, c := range letters {
+// Convert []rune to []byte
+func runesToUTF8(rs []rune) []byte {
+	size := 0
+	for _, r := range rs {
+		size += utf8.RuneLen(r)
+	}
+
+	bs := make([]byte, size)
+
+	count := 0
+	for _, r := range rs {
+		count += utf8.EncodeRune(bs[count:], r)
+	}
+
+	return bs
+}
+
+var validEsc = []rune{'"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'r', 'u'}
+
+// Check if char is valid escape
+func isCharValidEscape(char rune) bool {
+	for _, c := range validEsc {
 		if char == c {
 			return true
 		}
@@ -14,8 +37,11 @@ func isCharLetter(char byte) bool {
 	return false
 }
 
-func isCharNumber(char byte) bool {
-	for _, c := range numbers {
+var hex = []rune{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'a', 'b', 'c', 'd', 'e', 'f', 'A', 'B', 'C', 'D', 'E', 'F'}
+
+// Check if a rune is a hexa char
+func isCharHex(char rune) bool {
+	for _, c := range hex {
 		if char == c {
 			return true
 		}
@@ -24,138 +50,50 @@ func isCharNumber(char byte) bool {
 	return false
 }
 
-func isCharSyntax(char byte) bool {
-	for _, c := range syntax {
+// quote rune to string converted to []rune
+func quoteRune(char rune) []rune {
+	rns := []rune(strconv.QuoteRune(char))
+	return rns[1 : len(rns)-1]
+}
+
+var endNum = []rune{'}', ']', ',', ' '}
+
+// check if char numeric ending
+func isCharEndNum(char rune) bool {
+	for _, c := range endNum {
 		if char == c {
 			return true
 		}
 	}
 
-	return false
-}
-
-func isCharEscapable(char byte) bool {
-	for _, c := range escapable {
-		if char == c {
-			return true
-		}
-	}
-
-	return false
-}
-
-func isCharValidBeginObj(char byte) bool {
-	if char == openBrack {
-		return true
-	}
-
-	if char == openCurlBrack {
-		return true
-	}
-
-	if char == quot {
-		return true
-	}
-
-	if char == minus {
-		return true
-	}
-
-	// t for true bool
-	if char == 116 {
-		return true
-	}
-
-	// f for false bool
-	if char == 102 {
-		return true
-	}
-
-	// n for null
-	if char == 110 {
-		return true
-	}
-
-	if isCharNumber(char) {
+	if unicode.IsControl(char) || char == ' ' {
 		return true
 	}
 
 	return false
 }
 
-func escapeChar(char byte) []byte {
-	// \a
-	if char == 7 {
-		return []byte(`\a`)
+// check if exponent valid
+func isExpValid(r reader) (rune, error) {
+	char, _, err := r.ReadRune()
+	if err != nil {
+		if err == io.EOF {
+			return 0, errInvalid
+		}
+
+		return 0, err
 	}
 
-	// \b
-	if char == 8 {
-		return []byte(`\b`)
+	if !unicode.IsNumber(char) && char != '+' && char != '-' {
+		return 0, errInvalid
 	}
 
-	// \t
-	if char == 9 {
-		return []byte(`\t`)
-	}
-
-	// \n
-	if char == 10 {
-		return []byte(`\n`)
-	}
-
-	// \v
-	if char == 11 {
-		return []byte(`\v`)
-	}
-
-	// \f
-	if char == 12 {
-		return []byte(`\f`)
-	}
-
-	// \r
-	if char == 13 {
-		return []byte(`\r`)
-	}
-
-	return nil
+	return char, nil
 }
 
-func isCharExponent(char byte) bool {
-	for _, c := range exponentChar {
-		if char == c {
-			return true
-		}
-	}
-
-	return false
-}
-
-// apparently in json, something like 1e+1 is valid, but when parse is not,
-// the equal valid form is 1.0e+1
-func convertExponentToParseable(chars []byte) []byte {
-	decimalFound := false
-	for _, char := range chars {
-		if char == dot {
-			decimalFound = true
-			return chars
-		}
-
-		if isCharExponent(char) && !decimalFound {
-			chars = []byte(strings.Replace(string(chars), "e", ".0e", 1))
-			return chars
-		}
-	}
-
-	return chars
-}
-
-func isCharHex(char byte) bool {
-	for _, c := range hexChars {
-		if char == c {
-			return true
-		}
+func isCharMinOrPlus(char rune) bool {
+	if char == '-' || char == '+' {
+		return true
 	}
 
 	return false

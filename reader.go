@@ -1,33 +1,29 @@
 package jsonextract
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"strings"
 )
 
 type reader interface {
-	ReadByte() (byte, error)
-	UnreadByte() error
+	ReadRune() (r rune, size int, err error)
+	UnreadRune() error
 }
 
 func readFromBytes(byts []byte) reader {
-	buff := bytes.NewReader(byts)
-
+	buff := bufio.NewReader(bytes.NewReader(byts))
 	return buff
 }
 
 func readFromString(str string) reader {
-	rdr := strings.NewReader(str)
+	rdr := bufio.NewReader(strings.NewReader(str))
 	return rdr
 }
 
 func readFromReader(r io.Reader) (reader, error) {
-	init := make([]byte, 0)
-	buff := bytes.NewBuffer(init)
-	if _, err := buff.ReadFrom(r); err != nil {
-		return nil, err
-	}
+	buff := bufio.NewReader(r)
 
 	return buff, nil
 }

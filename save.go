@@ -1,8 +1,6 @@
 package jsonextract
 
-import (
-	"os"
-)
+import "os"
 
 // SaveToPath save extracted JSONs to a file path
 func SaveToPath(data []*JSON, path string) error {
@@ -27,7 +25,7 @@ func save(data []*JSON, path string) error {
 	c := len(data)
 	if c > 0 {
 		for i, d := range data {
-			rest = append(rest, d.Raw.Bytes()...)
+			rest = append(rest, d.RawBytes()...)
 			if i == c-1 {
 				rest = append(rest, 93)
 			} else {

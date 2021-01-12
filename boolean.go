@@ -1,23 +1,25 @@
 package jsonextract
 
-func parseBool(r reader) (*JSON, error) {
-	char, err := r.ReadByte()
-	if err != nil {
-		return nil, err
-	}
+import "io"
 
-	// t for true
-	if char == 116 {
-		raw := new(Raw)
-		raw.push(char)
-		json := &JSON{Kind: Boolean, Raw: raw}
-		for i, c := range trueStr {
-			if i == 0 {
-				continue
-			}
+var (
+	trueChars  = []rune{'r', 'u', 'e'}
+	falseChars = []rune{'a', 'l', 's', 'e'}
+)
 
-			char, err := r.ReadByte()
+func parseBool(r reader, firstC rune) (*JSON, error) {
+	json := &JSON{Kind: Boolean}
+	json.push(firstC)
+
+	// true bool
+	if firstC == 't' {
+		for _, c := range trueChars {
+			char, _, err := r.ReadRune()
 			if err != nil {
+				if err == io.EOF {
+					return nil, errInvalid
+				}
+
 				return nil, err
 			}
 
@@ -25,25 +27,22 @@ func parseBool(r reader) (*JSON, error) {
 				return nil, errInvalid
 			}
 
-			raw.push(char)
+			json.push(char)
 		}
 
-		json.Val = true
+		json.val = true
 		return json, nil
 	}
 
-	// f for false
-	if char == 102 {
-		raw := new(Raw)
-		raw.push(char)
-		json := &JSON{Kind: Boolean, Raw: raw}
-		for i, c := range falseStr {
-			if i == 0 {
-				continue
-			}
-
-			char, err := r.ReadByte()
+	// false bool
+	if firstC == 'f' {
+		for _, c := range falseChars {
+			char, _, err := r.ReadRune()
 			if err != nil {
+				if err == io.EOF {
+					return nil, errInvalid
+				}
+
 				return nil, err
 			}
 
@@ -51,12 +50,12 @@ func parseBool(r reader) (*JSON, error) {
 				return nil, errInvalid
 			}
 
-			raw.push(char)
+			json.push(char)
 		}
 
-		json.Val = false
+		json.val = false
 		return json, nil
 	}
 
-	return nil, errUnmatch
+	return json, nil
 }

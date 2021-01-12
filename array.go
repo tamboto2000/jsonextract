@@ -1,79 +1,102 @@
 package jsonextract
 
-func parseArr(r reader) (*JSON, error) {
-	char, err := r.ReadByte()
-	if err != nil {
-		return nil, err
-	}
+import (
+	"io"
+	"unicode"
+)
 
-	if char == openBrack {
-		raw := new(Raw)
-		json := &JSON{Kind: Array, Raw: raw}
-		raw.push(char)
+func parseArray(r reader) (*JSON, error) {
+	json := &JSON{Kind: Array}
+	json.push('[')
 
-		for {
-			char, err := r.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-
-			if isCharValidBeginObj(char) {
-				r.UnreadByte()
-				val, err := parseArrayVal(r)
-				if err != nil {
-					return nil, err
-				}
-
-				raw.pushBytes(val.Raw.byts)
-				json.Vals = append(json.Vals, val)
-				continue
-			}
-
-			if char == closeBrack {
-				raw.push(char)
-				return json, nil
-			}
-
-			if char == coma {
-				raw.push(char)
-				continue
-			}
-
-			if isCharSyntax(char) {
-				continue
-			}
-
-			return nil, errInvalid
-		}
-	}
-
-	return nil, errUnmatch
-}
-
-func parseArrayVal(r reader) (*JSON, error) {
-	val, err := parse(r)
-	if err != nil {
-		return nil, err
-	}
-
-	// find delimiter (, or ])
+	vals := make([]*JSON, 0)
+	// find first value
 	for {
-		char, err := r.ReadByte()
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				return nil, errInvalid
+			}
+
+			return nil, err
+		}
+
+		if unicode.IsControl(char) || char == ' ' {
+			continue
+		}
+
+		if char == ']' {
+			json.push(char)
+			json.val = vals
+			return json, nil
+		}
+
+		val, err := parse(r, char)
 		if err != nil {
 			return nil, err
 		}
 
-		if isCharSyntax(char) {
-			continue
+		if val == nil {
+			return nil, errInvalid
 		}
 
-		if char == coma || char == closeBrack {
-			r.UnreadByte()
-			return val, nil
-		}
-
+		vals = append(vals, val)
+		json.pushRns(val.raw)
 		break
 	}
 
-	return nil, errInvalid
+	onNext := false
+	for {
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				return nil, errInvalid
+			}
+
+			return nil, err
+		}
+
+		if unicode.IsControl(char) || char == ' ' {
+			continue
+		}
+
+		if char == ']' {
+			if onNext {
+				return nil, errInvalid
+			}
+
+			json.push(char)
+			json.val = vals
+			break
+		}
+
+		if char == ',' {
+			if onNext {
+				return nil, errInvalid
+			}
+
+			onNext = true
+			json.push(char)
+			continue
+		}
+
+		if onNext {
+			val, err := parse(r, char)
+			if err != nil {
+				return nil, err
+			}
+
+			if val == nil {
+				return nil, errInvalid
+			}
+
+			vals = append(vals, val)
+			json.val = vals
+			json.pushRns(val.raw)
+			onNext = false
+			continue
+		}
+	}
+
+	return json, nil
 }

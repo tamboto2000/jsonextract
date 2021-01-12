@@ -7,16 +7,22 @@ import (
 )
 
 func main() {
-	jsons, err := jsonextract.FromFile("boolean.txt")
+	raw := []byte(`
+	true
+	false
+	fals
+	`)
+
+	jsons, err := jsonextract.FromBytes(raw)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	for _, json := range jsons {
-		fmt.Println("bool val:", json.Val.(bool))
-	}
-
-	if err := jsonextract.Save(jsons); err != nil {
-		panic(err.Error())
+		if json.Kind == jsonextract.Boolean {
+			fmt.Println("raw:", string(json.RawRunes()))
+			bl, _ := json.Boolean()
+			fmt.Println("val:", bl)
+		}
 	}
 }

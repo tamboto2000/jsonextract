@@ -3,279 +3,227 @@ package jsonextract
 import (
 	"io"
 	"strconv"
+	"unicode"
 )
 
-// pre-process numeric
-func parseNum(r reader) (*JSON, error) {
-	char, err := r.ReadByte()
-	if err != nil {
+func parseNumeric(r reader, firstC rune) (*JSON, error) {
+	json := &JSON{Kind: Integer}
+
+	// check if first char is minus sign
+	if firstC == '-' {
+		json.push(firstC)
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				return nil, errInvalid
+			}
+
+			return nil, err
+		}
+
+		firstC = char
+	}
+
+	// if first char is not number, invalid
+	if !unicode.IsNumber(firstC) {
+		return nil, errInvalid
+	}
+
+	json.push(firstC)
+
+	// check if first char is 0
+	if firstC == '0' {
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				json.push(firstC)
+				json.val = int64(0)
+				return json, nil
+			}
+
+			return nil, err
+		}
+
+		// float indication
+		if char == '.' {
+			json.Kind = Float
+			json.push(char)
+			char, _, err := r.ReadRune()
+			if err != nil {
+				if err == io.EOF {
+					return nil, errInvalid
+				}
+
+				return nil, err
+			}
+
+			if !unicode.IsNumber(char) {
+				return nil, errInvalid
+			}
+
+			json.push(char)
+			if err := parseNumFract(r, json); err != nil {
+				return nil, err
+			}
+
+			return json, nil
+		}
+
+		// exponent indication
+		if char == 'e' || char == 'E' {
+			json.Kind = Float
+			json.push(char)
+			if err := parseExp(r, json); err != nil {
+				return nil, err
+			}
+
+			return json, nil
+		}
+
+		// if char end of number
+		if isCharEndNum(char) {
+			r.UnreadRune()
+
+			json.val = int64(0)
+			return json, nil
+		}
+
+		return nil, errInvalid
+	}
+
+	if err := parseNumFract(r, json); err != nil {
 		return nil, err
 	}
 
-	raw := new(Raw)
-	json := &JSON{Kind: Int, Raw: raw}
-	// if char is '-', verify if the char after is numeric
-	if char == minus {
-		raw.push(char)
-		char, err := r.ReadByte()
-		if err != nil {
-			return nil, err
-		}
-
-		if !isCharNumber(char) {
-			return nil, errInvalid
-		}
-
-		raw.push(char)
-		// if char is num 0, verify if the char after is '.', like 0.3, 0.1, etc.,
-		// the only valid numeric format with zero beginning is floating point, just zero, or exponent
-		if char == 48 {
-			char, err := r.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-
-			// if char != dot {
-			// 	return nil, errInvalid
-			// }
-
-			if char == dot {
-				raw.push(char)
-				char, err := r.ReadByte()
-				if err != nil {
-					return nil, err
-				}
-
-				if !isCharNumber(char) {
-					return nil, errInvalid
-				}
-
-				r.UnreadByte()
-				json.Kind = Float
-			} else if isCharExponent(char) {
-				raw.push(char)
-				for i := 0; i < 2; i++ {
-					char, err := r.ReadByte()
-					if err != nil {
-						return nil, err
-					}
-
-					if i == 0 {
-						if char != minus && char != plus {
-							return nil, errInvalid
-						}
-
-						raw.push(char)
-					}
-
-					if i == 1 {
-						if !isCharNumber(char) {
-							return nil, errInvalid
-						}
-
-						raw.push(char)
-					}
-				}
-
-				json.WithExponent = true
-			} else {
-				return nil, errInvalid
-			}
-		}
-
-		return parseNumVal(json, r)
-	}
-
-	if isCharNumber(char) {
-		raw.push(char)
-
-		// if char is num 0, verify if the char after is '.', like 0.3, 0.1, etc.,
-		// the only valid numeric format with zero beginning is floating point, just zero, or exponent
-		if char == 48 {
-			char, err := r.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-
-			if char == closeBrack || char == closeCurlBrack ||
-				char == coma || isCharSyntax(char) {
-				r.UnreadByte()
-				json.Val = int(0)
-				return json, nil
-			} else if char == dot {
-				raw.push(char)
-				char, err := r.ReadByte()
-				if err != nil {
-					return nil, err
-				}
-
-				if !isCharNumber(char) {
-					return nil, errInvalid
-				}
-
-				r.UnreadByte()
-				json.Kind = Float
-			} else if isCharExponent(char) {
-				raw.push(char)
-				for i := 0; i < 2; i++ {
-					char, err := r.ReadByte()
-					if err != nil {
-						return nil, err
-					}
-
-					if i == 0 {
-						if char != minus && char != plus {
-							return nil, errInvalid
-						}
-
-						raw.push(char)
-					}
-
-					if i == 1 {
-						if !isCharNumber(char) {
-							return nil, errInvalid
-						}
-
-						raw.push(char)
-					}
-				}
-
-				json.WithExponent = true
-			} else {
-				return nil, errInvalid
-			}
-		}
-
-		return parseNumVal(json, r)
-	}
-
-	return nil, errUnmatch
+	return json, nil
 }
 
-// parse numeric value
-func parseNumVal(num *JSON, r reader) (*JSON, error) {
+func parseNumFract(r reader, json *JSON) error {
 	for {
-		char, err := r.ReadByte()
+		char, _, err := r.ReadRune()
 		if err != nil {
 			if err == io.EOF {
-				if num.Kind == Int {
-					if num.WithExponent {
-						byts := convertExponentToParseable(num.Raw.byts)
-						i, err := strconv.ParseFloat(string(byts), 64)
-						if err != nil {
-							return nil, err
-						}
-
-						num.Val = int(i)
-					} else {
-						i, err := strconv.Atoi(string(num.Raw.Bytes()))
-						if err != nil {
-							return nil, err
-						}
-
-						num.Val = i
-					}
-				}
-
-				if num.Kind == Float {
-					i, err := strconv.ParseFloat(string(num.Raw.Bytes()), 64)
-					if err != nil {
-						return nil, err
-					}
-
-					num.Val = i
-				}
-
-				r.UnreadByte()
-				return num, nil
+				break
 			}
 
-			return nil, err
+			return err
 		}
 
-		if !isCharNumber(char) {
-			if char == closeBrack || char == closeCurlBrack ||
-				char == coma || isCharSyntax(char) {
-				if num.Kind == Int {
-					if num.WithExponent {
-						byts := convertExponentToParseable(num.Raw.byts)
-						i, err := strconv.ParseFloat(string(byts), 64)
-						if err != nil {
-							return nil, err
-						}
-
-						num.Val = int(i)
-					} else {
-						i, err := strconv.Atoi(string(num.Raw.Bytes()))
-						if err != nil {
-							return nil, err
-						}
-
-						num.Val = i
-					}
-				}
-
-				if num.Kind == Float {
-					i, err := strconv.ParseFloat(string(num.Raw.Bytes()), 64)
-					if err != nil {
-						return nil, err
-					}
-
-					num.Val = i
-				}
-
-				r.UnreadByte()
-				return num, nil
+		// detect float
+		if char == '.' {
+			if json.Kind == Float {
+				return errInvalid
 			}
 
-			if char == dot {
-				if num.Kind == Float {
-					return nil, errInvalid
-				}
+			json.push(char)
+			json.Kind = Float
+			continue
+		}
 
-				num.Kind = Float
-				num.Raw.push(char)
-				continue
-			}
-
-			if isCharExponent(char) {
-				if num.WithExponent {
-					return nil, errInvalid
-				}
-
-				num.Raw.push(char)
-				for i := 0; i < 2; i++ {
-					char, err := r.ReadByte()
-					if err != nil {
-						return nil, err
-					}
-
-					if i == 0 {
-						if char != minus && char != plus {
-							return nil, errInvalid
-						}
-
-						num.Raw.push(char)
-					}
-
-					if i == 1 {
-						if !isCharNumber(char) {
-							return nil, errInvalid
-						}
-
-						num.Raw.push(char)
-					}
-				}
-
-				num.WithExponent = true
-				continue
+		// detect exponent
+		if char == 'e' || char == 'E' {
+			json.push(char)
+			json.Kind = Float
+			if err := parseExp(r, json); err != nil {
+				return err
 			}
 
 			break
 		}
 
-		num.Raw.push(char)
+		if isCharEndNum(char) {
+			r.UnreadRune()
+			break
+		}
+
+		if !unicode.IsNumber(char) {
+			return errInvalid
+		}
+
+		json.push(char)
 	}
 
-	return nil, errInvalid
+	if json.Kind == Integer {
+		i, err := strconv.ParseInt(string(json.raw), 10, 64)
+		if err != nil {
+			return errInvalid
+		}
+
+		json.val = i
+	}
+
+	if json.Kind == Float {
+		i, err := strconv.ParseFloat(string(json.raw), 64)
+		if err != nil {
+			return errInvalid
+		}
+
+		json.val = i
+	}
+
+	return nil
+}
+
+func parseExp(r reader, json *JSON) error {
+	char, _, err := r.ReadRune()
+	if err != nil {
+		if err == io.EOF {
+			return errInvalid
+		}
+
+		return err
+	}
+
+	json.push(char)
+	if !unicode.IsNumber(char) {
+		if isCharMinOrPlus(char) {
+			char, _, err := r.ReadRune()
+			if err != nil {
+				if err == io.EOF {
+					return errInvalid
+				}
+
+				return err
+			}
+
+			if !unicode.IsNumber(char) {
+				return errInvalid
+			}
+
+			json.push(char)
+		} else {
+			return errInvalid
+		}
+	}
+
+	for {
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return err
+		}
+
+		if isCharEndNum(char) {
+			r.UnreadRune()
+			break
+		}
+
+		if !unicode.IsNumber(char) {
+			return errInvalid
+		}
+
+		json.push(char)
+	}
+
+	i, err := strconv.ParseFloat(string(json.raw), 64)
+	if err != nil {
+		return errInvalid
+	}
+
+	json.val = i
+
+	return nil
 }

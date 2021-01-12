@@ -1,36 +1,28 @@
 package jsonextract
 
+import "io"
+
+var nullVal = []rune{'u', 'l', 'l'}
+
 func parseNull(r reader) (*JSON, error) {
-	char, err := r.ReadByte()
-	if err != nil {
-		return nil, err
-	}
-
-	if char == 110 {
-		raw := new(Raw)
-		json := &JSON{Kind: Null, Raw: raw}
-		raw.push(char)
-
-		for i, c := range nullStr {
-			if i == 0 {
-				continue
-			}
-
-			char, err := r.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-
-			if char != c {				
+	json := &JSON{Kind: Null}
+	json.push('n')
+	for _, c := range nullVal {
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
 				return nil, errInvalid
 			}
 
-			raw.push(char)
+			return nil, err
 		}
 
-		json.Val = nil
-		return json, nil
+		if char != c {
+			return nil, errInvalid
+		}
+
+		json.push(char)
 	}
 
-	return nil, errUnmatch
+	return json, nil
 }

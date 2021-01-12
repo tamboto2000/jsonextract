@@ -1,161 +1,156 @@
 package jsonextract
 
 import (
-	"bytes"
+	"io"
+	"unicode"
 )
 
 func parseObj(r reader) (*JSON, error) {
-	char, err := r.ReadByte()
-	if err != nil {
+	json := &JSON{Kind: Object}
+	objMap := &objMap{val: make(map[string]*JSON)}
+	json.push('{')
+
+	// find first value
+	if err := parseKeyVal(r, json, objMap); err != nil {
 		return nil, err
 	}
 
-	if char == openCurlBrack {
-		raw := new(Raw)
-		json := &JSON{Kind: Object, Raw: raw, KeyVal: make(map[string]*JSON)}
-		raw.push(char)
-
-		for {
-			char, err := r.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-
-			// possible begin key
-			if char == quot {
-				r.UnreadByte()
-				key, val, err := parseObjKeyVal(r)
-				if err != nil {
-					return nil, err
-				}
-
-				json.KeyVal[key] = val
-				raw.pushBytes([]byte(`"` + key + `":`))
-				raw.pushBytes(val.Raw.byts)
-				continue
-			}
-
-			if char == coma {
-				raw.push(char)
-				continue
-			}
-
-			if char == closeCurlBrack {
-				raw.push(char)
-				return json, nil
-			}
-
-			if isCharSyntax(char) {
-				continue
-			}
-
-			return nil, errInvalid
-		}
-	}
-
-	return nil, errUnmatch
-}
-
-func parseObjKeyVal(r reader) (string, *JSON, error) {
-	keyStr, err := parseObjKey(r)
-	if err != nil {
-		return "", nil, err
-	}
-
-	val, err := parseObjVal(r)
-	if err != nil {
-		return "", nil, err
-	}
-
+	onNext := false
 	for {
-		char, err := r.ReadByte()
+		char, _, err := r.ReadRune()
 		if err != nil {
-			return "", nil, err
-		}
-
-		if char == coma || char == closeCurlBrack {
-			r.UnreadByte()
-			return keyStr, val, nil
-		}
-
-		if isCharSyntax(char) {
-			continue
-		}
-
-		break
-	}
-
-	return "", nil, errInvalid
-}
-
-func parseObjKey(r reader) (string, error) {
-	for {
-		char, err := r.ReadByte()
-		if err != nil {
-			return "", err
-		}
-
-		if isCharSyntax(char) {
-			continue
-		}
-
-		// begin key indicator
-		if char == quot {
-			r.UnreadByte()
-			val, err := parseStr(r)
-			if err != nil {
-				return "", err
+			if err == io.EOF {
+				return nil, errInvalid
 			}
 
-			keyStr := bytes.Trim(val.Raw.byts, `"`)
-			// find terminator (:)
-			for {
-				char, err := r.ReadByte()
-				if err != nil {
-					return "", err
-				}
-
-				if isCharSyntax(char) {
-					continue
-				}
-
-				if char == colon {
-					return string(keyStr), nil
-				}
-
-				break
-			}
-		}
-
-		break
-	}
-
-	return "", errInvalid
-}
-
-func parseObjVal(r reader) (*JSON, error) {
-	val, err := parse(r)
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		char, err := r.ReadByte()
-		if err != nil {
 			return nil, err
 		}
 
-		if isCharSyntax(char) {
+		if unicode.IsControl(char) || char == ' ' {
 			continue
 		}
 
-		if char == coma || char == closeCurlBrack {
-			r.UnreadByte()
-			return val, nil
+		if char == ',' {
+			if onNext {
+				return nil, errInvalid
+			}
+
+			onNext = true
+			json.push(char)
+			continue
 		}
 
+		if char == '}' {
+			if onNext {
+				return nil, errInvalid
+			}
+
+			json.push(char)
+			break
+		}
+
+		if onNext {
+			r.UnreadRune()
+			if err := parseKeyVal(r, json, objMap); err != nil {
+				return nil, err
+			}
+
+			onNext = false
+		}
+	}
+
+	return json, nil
+}
+
+func parseKeyVal(r reader, json *JSON, objMap *objMap) error {
+	var id string
+	var rawId []rune
+
+	// find key
+	for {
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				return errInvalid
+			}
+
+			return err
+		}
+
+		if unicode.IsControl(char) || char == ' ' {
+			continue
+		}
+
+		if char != '"' {
+			return errInvalid
+		}
+
+		str, err := parseString(r)
+		if err != nil {
+			return err
+		}
+
+		id = str.val.(string)
+		rawId = str.raw
 		break
 	}
 
-	return nil, errInvalid
+	// find key terminator
+	for {
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				return errInvalid
+			}
+
+			return err
+		}
+
+		if unicode.IsControl(char) || char == ' ' {
+			continue
+		}
+
+		if char != ':' {
+			return errInvalid
+		}
+
+		rawId = append(rawId, char)
+		break
+	}
+
+	// find value
+	for {
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				return errInvalid
+			}
+
+			return err
+		}
+
+		if unicode.IsControl(char) || char == ' ' {
+			continue
+		}
+
+		val, err := parse(r, char)
+		if err != nil {
+			return err
+		}
+
+		if val == nil {
+			return errInvalid
+		}
+
+		objMap.val[id] = val
+		json.pushRns(rawId)
+		json.pushRns(val.raw)
+		break
+	}
+
+	return nil
+}
+
+type objMap struct {
+	val map[string]*JSON
 }

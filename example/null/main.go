@@ -7,16 +7,16 @@ import (
 )
 
 func main() {
-	jsons, err := jsonextract.FromFile("null.txt")
+	raw := []byte("null null {null}")
+
+	jsons, err := jsonextract.FromBytes(raw)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	for _, json := range jsons {
-		fmt.Println("null val:", json.Val)
-	}
-
-	if err := jsonextract.Save(jsons); err != nil {
-		panic(err.Error())
+		if json.Kind == jsonextract.Null {
+			fmt.Println("raw:", string(json.RawRunes()))
+		}
 	}
 }

@@ -2,83 +2,87 @@ package jsonextract
 
 import (
 	jsonenc "encoding/json"
+	"io"
+	"unicode"
 )
 
-func parseStr(r reader) (*JSON, error) {
-	char, err := r.ReadByte()
-	if err != nil {
-		return nil, err
-	}
+func parseString(r reader) (*JSON, error) {
+	json := &JSON{Kind: String}
+	json.push('"')
 
-	if char == quot {
-		raw := new(Raw)
-		json := &JSON{Kind: String, Raw: raw}
-		raw.push(char)
-
-		for {
-			char, err := r.ReadByte()
-			if err != nil {
-				return nil, err
+	for {
+		char, _, err := r.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				return nil, errInvalid
 			}
 
-			if char == backSlash {
-				raw.push(char)
-				char, err := r.ReadByte()
-				if err != nil {
-					return nil, err
-				}
+			return nil, err
+		}
 
-				if !isCharEscapable(char) {
+		// detect escape
+		if char == '\\' {
+			json.push(char)
+			char, _, err := r.ReadRune()
+			if err != nil {
+				if err == io.EOF {
 					return nil, errInvalid
 				}
 
-				raw.push(char)
+				return nil, err
+			}
 
-				// unicode
-				if char == 117 {
-					for i := 0; i < 4; i++ {
-						char, err := r.ReadByte()
-						if err != nil {
-							return nil, err
-						}
+			if !isCharValidEscape(char) {
+				return nil, errInvalid
+			}
 
-						if !isCharHex(char) {
+			json.push(char)
+
+			// detect unicode
+			if char == 'u' {
+				for i := 0; i < 4; i++ {
+					char, _, err := r.ReadRune()
+					if err != nil {
+						if err == io.EOF {
 							return nil, errInvalid
 						}
 
-						raw.push(char)
+						return nil, err
 					}
-				}
 
-				continue
+					if !isCharHex(char) {
+						return nil, errInvalid
+					}
+
+					json.push(char)
+				}
 			}
 
-			if char == quot {
-				raw.push(char)
-				strVal := new(string)
-				if err := jsonenc.Unmarshal(raw.byts, strVal); err != nil {
-					return nil, err
-				}
-
-				json.Val = *strVal
-				return json, nil
-			}
-
-			if isCharSyntax(char) {
-				// if char is white space, just push
-				if char == 32 {
-					raw.push(char)
-					continue
-				}
-
-				escChar := escapeChar(char)
-				raw.pushBytes(escChar)
-				continue
-			}
-
-			raw.push(char)
+			continue
 		}
+
+		// escape control character
+		if unicode.IsControl(char) {
+			json.pushRns(quoteRune(char))
+			continue
+		}
+
+		// end string
+		if char == '"' {
+			json.push(char)
+			break
+		}
+
+		json.push(char)
 	}
 
-	return nil, errUnmatch
+	// unmarshal string
+	str := new(string)
+	if err := jsonenc.Unmarshal(json.RawBytes(), str); err != nil {
+		return nil, errInvalid
+	}
+
+	json.val = *str
+
+	return json, nil
 }
