@@ -36,11 +36,11 @@ import (
 // 	ParseNull:  true,
 // }
 
-// // FromString extract JSONs from string
-// func FromString(str string) ([]*JSON, error) {
-// 	r := readFromString(str)
-// 	return runParser(r, DefaultOption)
-// }
+// FromString extract JSONs from string
+func FromString(str string) ([]*JSON, error) {
+	r := readFromString(str)
+	return parseAll(r)
+}
 
 // FromBytes extract JSONs from bytes
 func FromBytes(byts []byte) ([]*JSON, error) {
