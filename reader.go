@@ -13,12 +13,12 @@ type reader interface {
 }
 
 func readFromBytes(byts []byte) reader {
-	buff := bufio.NewReader(bytes.NewReader(byts))
+	buff := bytes.NewReader(byts)
 	return buff
 }
 
 func readFromString(str string) reader {
-	rdr := bufio.NewReader(strings.NewReader(str))
+	rdr := strings.NewReader(str)
 	return rdr
 }
 
