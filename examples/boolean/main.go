@@ -21,8 +21,7 @@ func main() {
 	for _, json := range jsons {
 		if json.Kind == jsonextract.Boolean {
 			fmt.Println("raw:", string(json.RawRunes()))
-			bl, _ := json.Boolean()
-			fmt.Println("val:", bl)
+			fmt.Println("val:", json.Boolean())
 		}
 	}
 }

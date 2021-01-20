@@ -1,6 +1,7 @@
 package jsonextract
 
 import (
+	jsonenc "encoding/json"
 	"errors"
 	"io"
 	"unicode"
@@ -22,6 +23,79 @@ type JSON struct {
 	Kind int
 	val  interface{}
 	raw  []rune
+	// this will be assigned if value inside array of object
+	parent *JSON
+}
+
+// Reparsing JSON to produce new raw JSON bytes and runes.
+// This method is called if value inside JSON is edited
+func (json *JSON) reParse() error {
+	if json.Kind != Object && json.Kind != Array {
+		byts, err := jsonenc.Marshal(json.val)
+		if err != nil {
+			return err
+		}
+
+		// currently I don't know how to directly convert []byte to []rune...
+		json.raw = []rune(string(byts))
+	}
+
+	if json.Kind == Object {
+		keyVals := json.val.(map[string]*JSON)
+		newRaw := make([]rune, 0)
+		newRaw = append(newRaw, '{')
+		objLen := len(keyVals)
+		for key, val := range keyVals {
+			objLen--
+			if err := val.reParse(); err != nil {
+				return err
+			}
+
+			// Key sequence
+			newRaw = append(newRaw, '"')
+			newRaw = append(newRaw, []rune(key)...)
+			newRaw = append(newRaw, '"')
+			newRaw = append(newRaw, ':')
+
+			// value
+			newRaw = append(newRaw, val.RawRunes()...)
+
+			// delimiter
+			if objLen == 0 {
+				newRaw = append(newRaw, '}')
+			} else {
+				newRaw = append(newRaw, ',')
+			}
+		}
+
+		json.raw = newRaw
+	}
+
+	if json.Kind == Array {
+		vals := json.Array()
+		newRaw := make([]rune, 0)
+		newRaw = append(newRaw, '[')
+		arrLen := len(vals)
+		for i, val := range vals {
+			if err := val.reParse(); err != nil {
+				return err
+			}
+
+			// value
+			newRaw = append(newRaw, val.RawRunes()...)
+
+			// delimiter
+			if i == arrLen-1 {
+				newRaw = append(newRaw, ']')
+			} else {
+				newRaw = append(newRaw, ',')
+			}
+		}
+
+		json.raw = newRaw
+	}
+
+	return nil
 }
 
 func (json *JSON) push(char rune) {
@@ -42,16 +116,25 @@ func (json *JSON) RawBytes() []byte {
 	return runesToUTF8(json.raw)
 }
 
-// Array return array of JSON. Will return error if Kind != Array
-func (json *JSON) Array() ([]*JSON, error) {
-	if json.Kind != Array {
-		return nil, errors.New("value is not array")
+// Object return map of JSON. Will panic if Kind != Object
+func (json *JSON) Object() map[string]*JSON {
+	if json.Kind != Object {
+		panic("value is not object")
 	}
 
-	return json.val.([]*JSON), nil
+	return json.val.(map[string]*JSON)
 }
 
-// String return string value. Will return error if Kind != String
+// Array return array of JSON. Will panic if Kind != Array
+func (json *JSON) Array() []*JSON {
+	if json.Kind != Array {
+		panic("value is not array")
+	}
+
+	return json.val.([]*JSON)
+}
+
+// String return string value. Will panic if Kind != String
 func (json *JSON) String() (string, error) {
 	if json.Kind != String {
 		return "", errors.New("value is not string")
@@ -60,40 +143,31 @@ func (json *JSON) String() (string, error) {
 	return json.val.(string), nil
 }
 
-// Integer return int value. Will return error if Kind != Integer
-func (json *JSON) Integer() (int64, error) {
+// Integer return int value. Will panic if Kind != Integer
+func (json *JSON) Integer() int64 {
 	if json.Kind != Integer {
-		return 0, errors.New("value is not int")
+		panic("value is not int")
 	}
 
-	return json.val.(int64), nil
+	return json.val.(int64)
 }
 
-// Float return float value. Will return error if Kind != Float
-func (json *JSON) Float() (float64, error) {
+// Float return float value. Will panic if Kind != Float
+func (json *JSON) Float() float64 {
 	if json.Kind != Float {
-		return 0, errors.New("value is not float")
+		panic("value is not float")
 	}
 
-	return json.val.(float64), nil
+	return json.val.(float64)
 }
 
-// Boolean return bool value. Will return error if Kind != Boolean
-func (json *JSON) Boolean() (bool, error) {
+// Boolean return bool value. Will panic if Kind != Boolean
+func (json *JSON) Boolean() bool {
 	if json.Kind != Boolean {
-		return false, errors.New("value is not bool")
+		panic("value is not bool")
 	}
 
-	return json.val.(bool), nil
-}
-
-// Null will not return any value except error. Will return error if Kind != Boolean
-func (json *JSON) Null() error {
-	if json.Kind != Null {
-		return errors.New("value is not null")
-	}
-
-	return nil
+	return json.val.(bool)
 }
 
 func parseAll(r reader) ([]*JSON, error) {

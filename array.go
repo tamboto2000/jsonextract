@@ -42,6 +42,7 @@ func parseArray(r reader) (*JSON, error) {
 
 		vals = append(vals, val)
 		json.pushRns(val.raw)
+		val.parent = json
 		break
 	}
 
@@ -94,6 +95,7 @@ func parseArray(r reader) (*JSON, error) {
 			json.val = vals
 			json.pushRns(val.raw)
 			onNext = false
+			val.parent = json
 			continue
 		}
 	}

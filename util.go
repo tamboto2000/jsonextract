@@ -98,3 +98,11 @@ func isCharMinOrPlus(char rune) bool {
 
 	return false
 }
+
+func getParent(json *JSON) *JSON {
+	for json.parent != nil {
+		json = json.parent
+	}
+
+	return json
+}

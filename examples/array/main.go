@@ -17,7 +17,7 @@ func main() {
 		if json.Kind == jsonextract.Array {
 			fmt.Println("raw:", string(json.RawRunes()))
 			fmt.Println("array vals:")
-			vals, _ := json.Array()
+			vals := json.Array()
 			for _, val := range vals {
 				fmt.Println("\t", string(val.RawRunes()))
 			}
