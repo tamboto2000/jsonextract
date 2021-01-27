@@ -19,9 +19,7 @@ func main() {
 	for _, json := range jsons {
 		if json.Kind == jsonextract.String {
 			fmt.Println("raw:", string(json.RawRunes()))
-			if str, err := json.String(); err == nil {
-				fmt.Println("val:", str)
-			}
+			fmt.Println("val:", json.String())
 		}
 	}
 }

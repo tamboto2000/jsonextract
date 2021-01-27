@@ -23,20 +23,16 @@ func main() {
 
 	// when you edit a value, it automatically generate new raw json
 	// edit field "key" value.
-	if err := keyVal["key"].EditStr("Hello World"); err != nil {
-		panic(err.Error())
-	}
+	keyVal["key"].EditStr("Hello World")
 
 	// edit field intVal
-	if err := keyVal["intVal"].EditInt(69); err != nil {
-		panic(err.Error())
-	}
+	keyVal["intVal"].EditInt(69)
 
 	// print raw JSON
 	fmt.Println("edited raw:", string(json.RawRunes()))
 
 	// print edited value
-	str, _ := keyVal["key"].String()
+	str := keyVal["key"].String()
 	fmt.Println(`field "key" val:`, str)
 	fmt.Println(`field "intVal" val:`, keyVal["intVal"].Integer())
 }

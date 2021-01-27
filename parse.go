@@ -2,7 +2,6 @@ package jsonextract
 
 import (
 	jsonenc "encoding/json"
-	"errors"
 	"io"
 	"unicode"
 )
@@ -29,12 +28,9 @@ type JSON struct {
 
 // Reparsing JSON to produce new raw JSON bytes and runes.
 // This method is called if value inside JSON is edited
-func (json *JSON) reParse() error {
+func (json *JSON) reParse() {
 	if json.Kind != Object && json.Kind != Array {
-		byts, err := jsonenc.Marshal(json.val)
-		if err != nil {
-			return err
-		}
+		byts, _ := jsonenc.Marshal(json.val)
 
 		// currently I don't know how to directly convert []byte to []rune...
 		json.raw = []rune(string(byts))
@@ -47,9 +43,7 @@ func (json *JSON) reParse() error {
 		objLen := len(keyVals)
 		for key, val := range keyVals {
 			objLen--
-			if err := val.reParse(); err != nil {
-				return err
-			}
+			val.reParse()
 
 			// Key sequence
 			newRaw = append(newRaw, '"')
@@ -77,9 +71,7 @@ func (json *JSON) reParse() error {
 		newRaw = append(newRaw, '[')
 		arrLen := len(vals)
 		for i, val := range vals {
-			if err := val.reParse(); err != nil {
-				return err
-			}
+			val.reParse()
 
 			// value
 			newRaw = append(newRaw, val.RawRunes()...)
@@ -94,8 +86,6 @@ func (json *JSON) reParse() error {
 
 		json.raw = newRaw
 	}
-
-	return nil
 }
 
 func (json *JSON) push(char rune) {
@@ -135,12 +125,12 @@ func (json *JSON) Array() []*JSON {
 }
 
 // String return string value. Will panic if Kind != String
-func (json *JSON) String() (string, error) {
+func (json *JSON) String() string {
 	if json.Kind != String {
-		return "", errors.New("value is not string")
+		panic("value is not string")
 	}
 
-	return json.val.(string), nil
+	return json.val.(string)
 }
 
 // Integer return int value. Will panic if Kind != Integer
