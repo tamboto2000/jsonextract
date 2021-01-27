@@ -7,7 +7,7 @@ import (
 )
 
 func parseString(r reader) (*JSON, error) {
-	json := &JSON{Kind: String}
+	json := &JSON{kind: String}
 	json.push('"')
 
 	for {

@@ -28,13 +28,13 @@ func main() {
 	}
 
 	for _, json := range jsons {
-		if json.Kind == jsonextract.Integer {
+		if json.Kind() == jsonextract.Integer {
 			fmt.Println("int value")
 			fmt.Println("\traw:", string(json.RawRunes()))
 			fmt.Println("\tval:", json.Integer())
 		}
 
-		if json.Kind == jsonextract.Float {
+		if json.Kind() == jsonextract.Float {
 			fmt.Println("float value")
 			fmt.Println("\traw:", string(json.RawRunes()))
 			fmt.Println("\tval:", json.Float())

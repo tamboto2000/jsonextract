@@ -2,7 +2,7 @@ package jsonextract
 
 // EditStr edit string value. Will panic if JSON.Kind != String
 func (json *JSON) EditStr(str string) {
-	if json.Kind != String {
+	if json.kind != String {
 		panic("value is not string")
 	}
 
@@ -13,7 +13,7 @@ func (json *JSON) EditStr(str string) {
 
 // EditInt edit int value. Will panic if JSON.Kind != Integer
 func (json *JSON) EditInt(i int64) {
-	if json.Kind != Integer {
+	if json.kind != Integer {
 		panic("value is not int")
 	}
 
@@ -24,7 +24,7 @@ func (json *JSON) EditInt(i int64) {
 
 // EditFloat edit float value. Will panic if JSON.Kind != Float
 func (json *JSON) EditFloat(i float64) {
-	if json.Kind != Float {
+	if json.kind != Float {
 		panic("value is not float")
 	}
 
@@ -35,7 +35,7 @@ func (json *JSON) EditFloat(i float64) {
 
 // EditBool edit bool value. Will panic if JSON.Kind != Boolean
 func (json *JSON) EditBool(b bool) {
-	if json.Kind != Boolean {
+	if json.kind != Boolean {
 		panic("value is not bool")
 	}
 
@@ -46,7 +46,7 @@ func (json *JSON) EditBool(b bool) {
 
 // DeleteField delete object field by key. Will panic if JSON.Kind != Object
 func (json *JSON) DeleteField(key string) {
-	if json.Kind != Object {
+	if json.kind != Object {
 		panic("value is not object")
 	}
 
@@ -59,7 +59,7 @@ func (json *JSON) DeleteField(key string) {
 
 // DeleteElm delete element on index i. Will panic if JSON.Kind != Array
 func (json *JSON) DeleteElm(i int) {
-	if json.Kind != Array {
+	if json.kind != Array {
 		panic("value is not array")
 	}
 
@@ -77,7 +77,7 @@ func (json *JSON) DeleteElm(i int) {
 // AddField add new field to object. Will panic if JSON.Kind != Object
 // Valid type for val are string, int, float, map[string]interface{}, struct, and nil
 // func (json *JSON) AddField(key string, val interface{}) error {
-// 	if json.Kind != Object {
+// 	if json.kind != Object {
 // 		panic("value is not object")
 // 	}
 

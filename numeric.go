@@ -7,7 +7,7 @@ import (
 )
 
 func parseNumeric(r reader, firstC rune) (*JSON, error) {
-	json := &JSON{Kind: Integer}
+	json := &JSON{kind: Integer}
 
 	// check if first char is minus sign
 	if firstC == '-' {
@@ -46,7 +46,7 @@ func parseNumeric(r reader, firstC rune) (*JSON, error) {
 
 		// float indication
 		if char == '.' {
-			json.Kind = Float
+			json.kind = Float
 			json.push(char)
 			char, _, err := r.ReadRune()
 			if err != nil {
@@ -71,7 +71,7 @@ func parseNumeric(r reader, firstC rune) (*JSON, error) {
 
 		// exponent indication
 		if char == 'e' || char == 'E' {
-			json.Kind = Float
+			json.kind = Float
 			json.push(char)
 			if err := parseExp(r, json); err != nil {
 				return nil, err
@@ -111,19 +111,19 @@ func parseNumFract(r reader, json *JSON) error {
 
 		// detect float
 		if char == '.' {
-			if json.Kind == Float {
+			if json.kind == Float {
 				return errInvalid
 			}
 
 			json.push(char)
-			json.Kind = Float
+			json.kind = Float
 			continue
 		}
 
 		// detect exponent
 		if char == 'e' || char == 'E' {
 			json.push(char)
-			json.Kind = Float
+			json.kind = Float
 			if err := parseExp(r, json); err != nil {
 				return err
 			}
@@ -143,7 +143,7 @@ func parseNumFract(r reader, json *JSON) error {
 		json.push(char)
 	}
 
-	if json.Kind == Integer {
+	if json.kind == Integer {
 		i, err := strconv.ParseInt(string(json.raw), 10, 64)
 		if err != nil {
 			return errInvalid
@@ -152,7 +152,7 @@ func parseNumFract(r reader, json *JSON) error {
 		json.val = i
 	}
 
-	if json.Kind == Float {
+	if json.kind == Float {
 		i, err := strconv.ParseFloat(string(json.raw), 64)
 		if err != nil {
 			return errInvalid

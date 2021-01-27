@@ -5,7 +5,7 @@ import "io"
 var nullVal = []rune{'u', 'l', 'l'}
 
 func parseNull(r reader) (*JSON, error) {
-	json := &JSON{Kind: Null}
+	json := &JSON{kind: Null}
 	json.push('n')
 	for _, c := range nullVal {
 		char, _, err := r.ReadRune()

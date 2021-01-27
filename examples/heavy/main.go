@@ -11,11 +11,11 @@ func main() {
 
 	newList := make([]*jsonextract.JSON, 0)
 	for _, json := range jsons {
-		if json.Kind == jsonextract.Array {
+		if json.Kind() == jsonextract.Array {
 			newList = append(newList, json)
 		}
 
-		if json.Kind == jsonextract.Object {
+		if json.Kind() == jsonextract.Object {
 			newList = append(newList, json)
 		}
 	}

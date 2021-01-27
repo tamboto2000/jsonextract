@@ -19,7 +19,7 @@ const (
 
 // JSON represent JSON val
 type JSON struct {
-	Kind int
+	kind int
 	val  interface{}
 	raw  []rune
 	// this will be assigned if value inside array of object
@@ -29,14 +29,14 @@ type JSON struct {
 // Reparsing JSON to produce new raw JSON bytes and runes.
 // This method is called if value inside JSON is edited
 func (json *JSON) reParse() {
-	if json.Kind != Object && json.Kind != Array {
+	if json.kind != Object && json.kind != Array {
 		byts, _ := jsonenc.Marshal(json.val)
 
 		// currently I don't know how to directly convert []byte to []rune...
 		json.raw = []rune(string(byts))
 	}
 
-	if json.Kind == Object {
+	if json.kind == Object {
 		keyVals := json.val.(map[string]*JSON)
 		newRaw := make([]rune, 0)
 		newRaw = append(newRaw, '{')
@@ -65,7 +65,7 @@ func (json *JSON) reParse() {
 		json.raw = newRaw
 	}
 
-	if json.Kind == Array {
+	if json.kind == Array {
 		vals := json.Array()
 		newRaw := make([]rune, 0)
 		newRaw = append(newRaw, '[')
@@ -96,6 +96,11 @@ func (json *JSON) pushRns(chars []rune) {
 	json.raw = append(json.raw, chars...)
 }
 
+// Kind return json kind/type
+func (json *JSON) Kind() int {
+	return json.kind
+}
+
 // RawRunes return parsed raw runes of JSON
 func (json *JSON) RawRunes() []rune {
 	return json.raw
@@ -108,7 +113,7 @@ func (json *JSON) RawBytes() []byte {
 
 // Object return map of JSON. Will panic if Kind != Object
 func (json *JSON) Object() map[string]*JSON {
-	if json.Kind != Object {
+	if json.kind != Object {
 		panic("value is not object")
 	}
 
@@ -117,7 +122,7 @@ func (json *JSON) Object() map[string]*JSON {
 
 // Array return array of JSON. Will panic if Kind != Array
 func (json *JSON) Array() []*JSON {
-	if json.Kind != Array {
+	if json.kind != Array {
 		panic("value is not array")
 	}
 
@@ -126,7 +131,7 @@ func (json *JSON) Array() []*JSON {
 
 // String return string value. Will panic if Kind != String
 func (json *JSON) String() string {
-	if json.Kind != String {
+	if json.kind != String {
 		panic("value is not string")
 	}
 
@@ -135,7 +140,7 @@ func (json *JSON) String() string {
 
 // Integer return int value. Will panic if Kind != Integer
 func (json *JSON) Integer() int64 {
-	if json.Kind != Integer {
+	if json.kind != Integer {
 		panic("value is not int")
 	}
 
@@ -144,7 +149,7 @@ func (json *JSON) Integer() int64 {
 
 // Float return float value. Will panic if Kind != Float
 func (json *JSON) Float() float64 {
-	if json.Kind != Float {
+	if json.kind != Float {
 		panic("value is not float")
 	}
 
@@ -153,7 +158,7 @@ func (json *JSON) Float() float64 {
 
 // Boolean return bool value. Will panic if Kind != Boolean
 func (json *JSON) Boolean() bool {
-	if json.Kind != Boolean {
+	if json.kind != Boolean {
 		panic("value is not bool")
 	}
 

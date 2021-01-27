@@ -8,7 +8,7 @@ var (
 )
 
 func parseBool(r reader, firstC rune) (*JSON, error) {
-	json := &JSON{Kind: Boolean}
+	json := &JSON{kind: Boolean}
 	json.push(firstC)
 
 	// true bool

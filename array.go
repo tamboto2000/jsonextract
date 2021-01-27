@@ -6,7 +6,7 @@ import (
 )
 
 func parseArray(r reader) (*JSON, error) {
-	json := &JSON{Kind: Array}
+	json := &JSON{kind: Array}
 	json.push('[')
 
 	vals := make([]*JSON, 0)

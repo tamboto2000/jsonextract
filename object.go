@@ -6,7 +6,7 @@ import (
 )
 
 func parseObj(r reader) (*JSON, error) {
-	json := &JSON{Kind: Object}
+	json := &JSON{kind: Object}
 	objMap := &objMap{val: make(map[string]*JSON)}
 	json.push('{')
 
