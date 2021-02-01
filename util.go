@@ -1,6 +1,7 @@
 package jsonextract
 
 import (
+	"bytes"
 	"io"
 	"strconv"
 	"unicode"
@@ -105,4 +106,21 @@ func getParent(json *JSON) *JSON {
 	}
 
 	return json
+}
+
+// read runes from bytes.Reader
+func readAllRunes(r *bytes.Reader) []rune {
+	size := r.Size()
+	rns := make([]rune, size)
+
+	for i := int64(0); i < size; i++ {
+		r, _, err := r.ReadRune()
+		if err != nil {
+			break
+		}
+
+		rns[i] = r
+	}
+
+	return rns
 }
