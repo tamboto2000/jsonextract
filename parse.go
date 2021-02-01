@@ -103,13 +103,13 @@ func (json *JSON) Kind() int {
 	return json.kind
 }
 
-// RawRunes return parsed raw runes of JSON
-func (json *JSON) RawRunes() []rune {
+// Runes return raw runes of extracted json
+func (json *JSON) Runes() []rune {
 	return json.raw
 }
 
-// RawBytes return parsed raw bytes of JSON
-func (json *JSON) RawBytes() []byte {
+// Bytes return raw bytes of extracted json
+func (json *JSON) Bytes() []byte {
 	return runesToUTF8(json.raw)
 }
 

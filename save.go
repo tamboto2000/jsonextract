@@ -25,7 +25,7 @@ func save(data []*JSON, path string) error {
 	c := len(data)
 	if c > 0 {
 		for i, d := range data {
-			rest = append(rest, d.RawBytes()...)
+			rest = append(rest, d.Bytes()...)
 			if i == c-1 {
 				rest = append(rest, 93)
 			} else {

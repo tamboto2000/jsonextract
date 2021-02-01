@@ -78,7 +78,7 @@ func parseString(r reader) (*JSON, error) {
 
 	// unmarshal string
 	str := new(string)
-	if err := jsonenc.Unmarshal(json.RawBytes(), str); err != nil {
+	if err := jsonenc.Unmarshal(json.Bytes(), str); err != nil {
 		return nil, errInvalid
 	}
 
