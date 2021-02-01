@@ -54,7 +54,7 @@ func (json *JSON) reParse() {
 			newRaw = append(newRaw, ':')
 
 			// value
-			newRaw = append(newRaw, val.RawRunes()...)
+			newRaw = append(newRaw, val.raw...)
 
 			// delimiter
 			if objLen == 0 {
@@ -76,7 +76,7 @@ func (json *JSON) reParse() {
 			val.reParse()
 
 			// value
-			newRaw = append(newRaw, val.RawRunes()...)
+			newRaw = append(newRaw, val.raw...)
 
 			// delimiter
 			if i == arrLen-1 {
