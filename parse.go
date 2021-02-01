@@ -4,6 +4,7 @@ import (
 	"bytes"
 	jsonenc "encoding/json"
 	"io"
+	"reflect"
 	"unicode"
 )
 
@@ -145,7 +146,7 @@ func (json *JSON) Integer() int64 {
 		panic("value is not int")
 	}
 
-	return json.val.(int64)
+	return convertIntTo64(json.val)
 }
 
 // Float return float value. Will panic if Kind != Float
@@ -154,7 +155,7 @@ func (json *JSON) Float() float64 {
 		panic("value is not float")
 	}
 
-	return json.val.(float64)
+	return convertFloatTo64(json.val)
 }
 
 // Boolean return bool value. Will panic if Kind != Boolean
@@ -258,4 +259,60 @@ func parse(r reader, char rune) (*JSON, error) {
 	}
 
 	return nil, nil
+}
+
+// convert any type of integer to int64
+func convertIntTo64(i interface{}) int64 {
+	refVal := reflect.ValueOf(i)
+
+	// signed integer
+	if refVal.Kind() == reflect.Int {
+		return int64(i.(int))
+	}
+
+	if refVal.Kind() == reflect.Int8 {
+		return int64(i.(int8))
+	}
+
+	if refVal.Kind() == reflect.Int16 {
+		return int64(i.(int16))
+	}
+
+	if refVal.Kind() == reflect.Int32 {
+		return int64(i.(int32))
+	}
+
+	// unsigned integer
+	if refVal.Kind() == reflect.Uint {
+		return int64(i.(uint))
+	}
+
+	if refVal.Kind() == reflect.Uint8 {
+		return int64(i.(uint8))
+	}
+
+	if refVal.Kind() == reflect.Uint16 {
+		return int64(i.(uint16))
+	}
+
+	if refVal.Kind() == reflect.Uint32 {
+		return int64(i.(uint32))
+	}
+
+	if refVal.Kind() == reflect.Uint64 {
+		return int64(i.(uint64))
+	}
+
+	return i.(int64)
+}
+
+// convert any type of float to float64
+func convertFloatTo64(i interface{}) float64 {
+	refVal := reflect.ValueOf(i)
+
+	if refVal.Kind() == reflect.Float32 {
+		return float64(i.(float32))
+	}
+
+	return i.(float64)
 }
