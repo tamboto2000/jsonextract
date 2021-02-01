@@ -1,5 +1,12 @@
 package jsonextract
 
+import (
+	"bytes"
+	jsonenc "encoding/json"
+	"errors"
+	"reflect"
+)
+
 // EditStr edit string value. Will panic if JSON.Kind != String
 func (json *JSON) EditStr(str string) {
 	if json.kind != String {
@@ -76,18 +83,89 @@ func (json *JSON) DeleteElm(i int) {
 
 // AddField add new field to object. Will panic if JSON.Kind != Object
 // Valid type for val are string, int, float, map[string]interface{}, struct, and nil
-// func (json *JSON) AddField(key string, val interface{}) error {
-// 	if json.kind != Object {
-// 		panic("value is not object")
-// 	}
+func (json *JSON) AddField(key string, val interface{}) error {
+	if json.kind != Object {
+		panic("value is not object")
+	}
 
-// 	refVal := reflect.ValueOf(val)
-// 	if refVal.Kind() == reflect.Ptr || refVal.Kind() == reflect.Interface {
-// 		refVal = refVal.Elem()
-// 		if refVal.IsZero() {
+	keyval := json.val.(map[string]*JSON)
 
-// 		}
-// 	}
+	// nil value
+	if val == nil {
+		newJSON := &JSON{
+			kind:   Null,
+			val:    nil,
+			raw:    []rune("null"),
+			parent: json,
+		}
 
-// 	return nil
-// }
+		keyval[key] = newJSON
+
+		getParent(json).reParse()
+		return nil
+	}
+
+	refVal := reflect.ValueOf(val)
+	for refVal.Kind() == reflect.Interface || refVal.Kind() == reflect.Ptr {
+		refVal = refVal.Elem()
+	}
+
+	// non array or map
+	if refVal.Kind() != reflect.Slice && refVal.Kind() != reflect.Array &&
+		refVal.Kind() != reflect.Map {
+
+		// generate new json bytes
+		jsbyts, _ := jsonenc.Marshal(val)
+		newJSON := &JSON{
+			val:    val,
+			raw:    readAllRunes(bytes.NewReader(jsbyts)),
+			parent: json,
+		}
+
+		// integer
+		if isValIsInteger(refVal) {
+			newJSON.kind = Integer
+		}
+
+		// float
+		if isValFloat(refVal) {
+			newJSON.kind = Float
+		}
+
+		// string
+		if refVal.Kind() == reflect.String {
+			newJSON.kind = String
+		}
+
+		getParent(json).reParse()
+	}
+
+	return errors.New("type not supported")
+}
+
+// check if reflection value kind is integer
+func isValIsInteger(val reflect.Value) bool {
+	// integer
+	if val.Kind() == reflect.Int || val.Kind() == reflect.Int8 ||
+		val.Kind() == reflect.Int16 || val.Kind() == reflect.Int32 ||
+		val.Kind() == reflect.Int64 {
+		return true
+	}
+
+	// unsigned integer
+	if val.Kind() == reflect.Uint || val.Kind() == reflect.Uint8 ||
+		val.Kind() == reflect.Uint16 || val.Kind() == reflect.Uint32 ||
+		val.Kind() == reflect.Uint64 {
+		return true
+	}
+
+	return false
+}
+
+func isValFloat(val reflect.Value) bool {
+	if val.Kind() == reflect.Float32 || val.Kind() == reflect.Float64 {
+		return true
+	}
+
+	return false
+}
