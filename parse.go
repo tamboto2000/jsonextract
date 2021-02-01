@@ -1,6 +1,7 @@
 package jsonextract
 
 import (
+	"bytes"
 	jsonenc "encoding/json"
 	"io"
 	"unicode"
@@ -32,8 +33,8 @@ func (json *JSON) reParse() {
 	if json.kind != Object && json.kind != Array {
 		byts, _ := jsonenc.Marshal(json.val)
 
-		// currently I don't know how to directly convert []byte to []rune...
-		json.raw = []rune(string(byts))
+		// convert bytes to runes
+		json.raw = readAllRunes(bytes.NewReader(byts))
 	}
 
 	if json.kind == Object {
