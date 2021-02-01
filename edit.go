@@ -1,8 +1,6 @@
 package jsonextract
 
 import (
-	"bytes"
-	jsonenc "encoding/json"
 	"errors"
 	"reflect"
 )
@@ -82,7 +80,6 @@ func (json *JSON) DeleteElm(i int) {
 }
 
 // AddField add new field to object. Will panic if JSON.Kind != Object
-// Valid type for val are string, int, float, map[string]interface{}, struct, and nil
 func (json *JSON) AddField(key string, val interface{}) error {
 	if json.kind != Object {
 		panic("value is not object")
@@ -90,57 +87,14 @@ func (json *JSON) AddField(key string, val interface{}) error {
 
 	keyval := json.val.(map[string]*JSON)
 
-	// nil value
-	if val == nil {
-		newJSON := &JSON{
-			kind:   Null,
-			val:    nil,
-			raw:    []rune("null"),
-			parent: json,
-		}
-
-		keyval[key] = newJSON
-
-		getParent(json).reParse()
-		return nil
+	newJSON, err := generateJSON(val)
+	if err != nil {
+		return err
 	}
 
-	refVal := reflect.ValueOf(val)
-	for refVal.Kind() == reflect.Interface || refVal.Kind() == reflect.Ptr {
-		refVal = refVal.Elem()
-	}
+	keyval[key] = newJSON
 
-	// non array or map
-	if refVal.Kind() != reflect.Slice && refVal.Kind() != reflect.Array &&
-		refVal.Kind() != reflect.Map {
-
-		// generate new json bytes
-		jsbyts, _ := jsonenc.Marshal(val)
-		newJSON := &JSON{
-			val:    val,
-			raw:    readAllRunes(bytes.NewReader(jsbyts)),
-			parent: json,
-		}
-
-		// integer
-		if isValIsInteger(refVal) {
-			newJSON.kind = Integer
-		}
-
-		// float
-		if isValFloat(refVal) {
-			newJSON.kind = Float
-		}
-
-		// string
-		if refVal.Kind() == reflect.String {
-			newJSON.kind = String
-		}
-
-		getParent(json).reParse()
-	}
-
-	return errors.New("type not supported")
+	return nil
 }
 
 // check if reflection value kind is integer
@@ -162,10 +116,60 @@ func isValIsInteger(val reflect.Value) bool {
 	return false
 }
 
-func isValFloat(val reflect.Value) bool {
+func isValIsFloat(val reflect.Value) bool {
 	if val.Kind() == reflect.Float32 || val.Kind() == reflect.Float64 {
 		return true
 	}
 
 	return false
+}
+
+// generate JSON from val
+func generateJSON(val interface{}) (*JSON, error) {
+	// nil value
+	if val == nil {
+		newJSON := &JSON{
+			kind: Null,
+			val:  nil,
+		}
+
+		return newJSON, nil
+	}
+
+	// if val is pointer or interface, iterate Value.Elem to get the real value
+	refVal := reflect.ValueOf(val)
+	for refVal.Kind() == reflect.Interface || refVal.Kind() == reflect.Ptr {
+		refVal = refVal.Elem()
+	}
+
+	// string
+	if refVal.Kind() == reflect.String {
+		var str string
+		newRefVal := reflect.ValueOf(&str)
+		newRefVal.Elem().Set(refVal)
+		newJSON := &JSON{
+			kind: String,
+			val:  str,
+		}
+
+		return newJSON, nil
+	}
+
+	// integer
+	if isValIsInteger(refVal) {
+
+	}
+
+	// // array
+	// if refVal.Kind() == reflect.Array || refVal.Kind() == reflect.Slice {
+	// 	for i := 0; i < refVal.Len(); i++ {
+	// 		item := refVal.Index(i)
+	// 		for item.Kind() == reflect.Ptr || item.Kind() == reflect.Interface {
+	// 			item = item.Elem()
+	// 		}
+
+	// 	}
+	// }
+
+	return nil, errors.New("type unsupported")
 }
