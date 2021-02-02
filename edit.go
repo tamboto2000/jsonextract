@@ -50,17 +50,40 @@ func (json *JSON) SetBool(b bool) {
 	getParent(json).reParse()
 }
 
-// DeleteField delete object field by key. Will panic if kind is not Object
-func (json *JSON) DeleteField(key string) {
+// DeleteField delete object field by key. Will panic if kind is not Object.
+// key must be (pointer to) string or an integer type, otherwise panic will occur
+func (json *JSON) DeleteField(key interface{}) bool {
 	if json.kind != Object {
 		panic("value is not object")
 	}
 
+	valKey := reflect.ValueOf(key)
+	for valKey.Kind() == reflect.Ptr || valKey.Kind() == reflect.Interface {
+		valKey = valKey.Elem()
+	}
+
+	if valKey.Kind() != reflect.String && !isValInteger(valKey) {
+		panic("key must be string or an integer type")
+	}
+
+	var keyStr string
+	if valKey.Kind() == reflect.String {
+		keyStr = valKey.String()
+	} else if isValInteger(valKey) {
+		keyStr = fmt.Sprintf("%d", valKey.Interface())
+	}
+
 	keyVal := json.val.(map[string]*JSON)
-	delete(keyVal, key)
+	if _, ok := keyVal[keyStr]; !ok {
+		return false
+	}
+
+	delete(keyVal, keyStr)
 	json.val = keyVal
 
 	getParent(json).reParse()
+
+	return true
 }
 
 // DeleteItem delete element on index i. Will panic if kind is not Array
