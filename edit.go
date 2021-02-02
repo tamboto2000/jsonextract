@@ -86,21 +86,29 @@ func (json *JSON) DeleteField(key interface{}) bool {
 	return true
 }
 
-// DeleteItem delete element on index i. Will panic if kind is not Array
-func (json *JSON) DeleteItem(i int) {
+// DeleteItem delete element on index i. Will panic if kind is not Array.
+// If i bigger than items count minus 1 (len(vals)-1, the last index), panic will occur
+func (json *JSON) DeleteItem(i int) bool {
 	if json.kind != Array {
 		panic("value is not array")
 	}
 
 	vals := json.val.([]*JSON)
-	if len(vals) == 0 {
-		return
+	valLen := len(vals)
+	if valLen == 0 {
+		return false
+	}
+
+	if i > valLen-1 {
+		panic("out of range")
 	}
 
 	vals = append(vals[:i], vals[i+1:]...)
 	json.val = vals
 
 	getParent(json).reParse()
+
+	return true
 }
 
 // AddField add new field to object. Will panic if kind is not Object.
