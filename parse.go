@@ -19,16 +19,15 @@ const (
 	Null
 )
 
-// JSON represent JSON val
+// JSON represent json val
 type JSON struct {
 	kind int
 	val  interface{}
-	raw  []rune
-	// this will be assigned if value inside array of object
+	raw  []rune	
 	parent *JSON
 }
 
-// reparsing JSON to produce new raw JSON bytes and runes.
+// reparsing JSON to produce new raw json bytes and runes.
 // This method is called if value inside JSON is edited
 func (json *JSON) reParse() {
 	if json.kind != Object && json.kind != Array {
@@ -98,7 +97,7 @@ func (json *JSON) pushRns(chars []rune) {
 	json.raw = append(json.raw, chars...)
 }
 
-// Kind return json kind/type
+// Kind return json kind
 func (json *JSON) Kind() int {
 	return json.kind
 }

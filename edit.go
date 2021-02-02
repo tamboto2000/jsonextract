@@ -51,7 +51,7 @@ func (json *JSON) SetBool(b bool) {
 }
 
 // DeleteField delete object field by key. Will panic if kind is not Object.
-// key must be (pointer to) string or an integer type, otherwise panic will occur
+// key must be string or an integer type, otherwise panic will occur
 func (json *JSON) DeleteField(key interface{}) bool {
 	if json.kind != Object {
 		panic("value is not object")
@@ -87,7 +87,7 @@ func (json *JSON) DeleteField(key interface{}) bool {
 }
 
 // DeleteItem delete element on index i. Will panic if kind is not Array.
-// If i bigger than items count minus 1 (len(vals)-1, the last index), panic will occur.
+// Will panic if i bigger than items count minus 1 (len(vals)-1, the last index).
 // If item is existed, true is returned, otherwise false
 func (json *JSON) DeleteItem(i int) bool {
 	if json.kind != Array {
@@ -114,8 +114,8 @@ func (json *JSON) DeleteItem(i int) bool {
 
 // AddField add new field to object. Will panic if kind is not Object.
 // Will panic if val is invalid json value.
-// Valid key is (pointer to) string or integer type.
-// If val is map, and key is not (pointer to) string nor an integer type, panic will occur
+// Valid key is string or integer type.
+// If val is map, and key is not string nor an integer type, panic will occur
 func (json *JSON) AddField(key interface{}, val interface{}) {
 	if json.kind != Object {
 		panic("value is not object")
