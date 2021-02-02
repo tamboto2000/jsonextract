@@ -35,6 +35,6 @@ func main() {
 		// 	fmt.Println("raw:", string(json.RawRunes()))
 		// }
 
-		fmt.Println("raw:", string(json.RawRunes()))
+		fmt.Println("raw:", string(json.Runes()))
 	}
 }
