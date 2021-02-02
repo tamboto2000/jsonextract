@@ -82,8 +82,9 @@ func (json *JSON) DeleteItem(i int) {
 
 // AddField add new field to object. Will panic if kind is not Object.
 // Will panic if val is invalid json value.
+// Valid key is (pointer to) string or integer type.
 // If val is map, and key is not (pointer to) string nor an integer type, panic will occur
-func (json *JSON) AddField(key string, val interface{}) {
+func (json *JSON) AddField(key interface{}, val interface{}) {
 	if json.kind != Object {
 		panic("value is not object")
 	}
@@ -97,7 +98,23 @@ func (json *JSON) AddField(key string, val interface{}) {
 
 	newJSON.parent = json
 
-	keyval[key] = newJSON
+	keyVal := reflect.ValueOf(key)
+	for keyVal.Kind() == reflect.Ptr || keyVal.Kind() == reflect.Interface {
+		keyVal = keyVal.Elem()
+	}
+
+	if keyVal.Kind() != reflect.String && !isValInteger(keyVal) {
+		panic("key must be string or an integer type")
+	}
+
+	var fk string
+	if keyVal.Kind() == reflect.String {
+		fk = keyVal.String()
+	} else if isValInteger(keyVal) {
+		fk = fmt.Sprintf("%d", keyVal.Interface())
+	}
+
+	keyval[fk] = newJSON
 	getParent(json).reParse()
 }
 
