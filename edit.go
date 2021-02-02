@@ -5,8 +5,8 @@ import (
 	"reflect"
 )
 
-// EditStr edit string value. Will panic if kind is not String
-func (json *JSON) EditStr(str string) {
+// SetStr set string value. Will panic if kind is not String
+func (json *JSON) SetStr(str string) {
 	if json.kind != String {
 		panic("value is not string")
 	}
@@ -16,8 +16,8 @@ func (json *JSON) EditStr(str string) {
 	getParent(json).reParse()
 }
 
-// EditInt edit int value. Will panic if kind is not Integer
-func (json *JSON) EditInt(i int64) {
+// SetInt set int value. Will panic if kind is not Integer
+func (json *JSON) SetInt(i int64) {
 	if json.kind != Integer {
 		panic("value is not int")
 	}
@@ -27,8 +27,8 @@ func (json *JSON) EditInt(i int64) {
 	getParent(json).reParse()
 }
 
-// EditFloat edit float value. Will panic if kind is not Float
-func (json *JSON) EditFloat(i float64) {
+// SetFloat set float value. Will panic if kind is not Float
+func (json *JSON) SetFloat(i float64) {
 	if json.kind != Float {
 		panic("value is not float")
 	}
@@ -38,8 +38,8 @@ func (json *JSON) EditFloat(i float64) {
 	getParent(json).reParse()
 }
 
-// EditBool edit bool value. Will panic if kind is not Boolean
-func (json *JSON) EditBool(b bool) {
+// SetBool set bool value. Will panic if kind is not Boolean
+func (json *JSON) SetBool(b bool) {
 	if json.kind != Boolean {
 		panic("value is not bool")
 	}
