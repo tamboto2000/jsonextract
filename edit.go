@@ -2,6 +2,7 @@ package jsonextract
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -81,7 +82,7 @@ func (json *JSON) DeleteItem(i int) {
 
 // AddField add new field to object. Will panic if kind is not Object.
 // Will panic if val is invalid json value.
-// If val is map, and key is not string, panic will occur
+// If val is map, and key is not (pointer to) string nor an integer type, panic will occur
 func (json *JSON) AddField(key string, val interface{}) {
 	if json.kind != Object {
 		panic("value is not object")
@@ -120,7 +121,7 @@ func (json *JSON) AddItem(val interface{}) {
 }
 
 // check if reflection value kind is integer
-func isValIsInteger(val reflect.Value) bool {
+func isValInteger(val reflect.Value) bool {
 	// integer
 	if val.Kind() == reflect.Int || val.Kind() == reflect.Int8 ||
 		val.Kind() == reflect.Int16 || val.Kind() == reflect.Int32 ||
@@ -138,7 +139,7 @@ func isValIsInteger(val reflect.Value) bool {
 	return false
 }
 
-func isValIsFloat(val reflect.Value) bool {
+func isValFloat(val reflect.Value) bool {
 	if val.Kind() == reflect.Float32 || val.Kind() == reflect.Float64 {
 		return true
 	}
@@ -178,7 +179,7 @@ func generateJSON(val interface{}) (*JSON, error) {
 	}
 
 	// integer
-	if isValIsInteger(refVal) {
+	if isValInteger(refVal) {
 		var i interface{}
 		newRefVal := reflect.ValueOf(&i)
 		newRefVal.Elem().Set(refVal)
@@ -191,7 +192,7 @@ func generateJSON(val interface{}) (*JSON, error) {
 	}
 
 	// float
-	if isValIsFloat(refVal) {
+	if isValFloat(refVal) {
 		var i interface{}
 		newRefVal := reflect.ValueOf(&i)
 		newRefVal.Elem().Set(refVal)
@@ -251,8 +252,12 @@ func generateJSON(val interface{}) (*JSON, error) {
 		newJSON := &JSON{kind: Object}
 		newMap := make(map[string]*JSON)
 		for _, key := range refVal.MapKeys() {
-			if key.Kind() != reflect.String {
-				return nil, errors.New("map key must be string")
+			for key.Kind() == reflect.Ptr || key.Kind() == reflect.Interface {
+				key = key.Elem()
+			}
+
+			if key.Kind() != reflect.String && !isValInteger(key) {
+				return nil, errors.New("map key must be string or an integer type")
 			}
 
 			item := refVal.MapIndex(key)
@@ -273,7 +278,14 @@ func generateJSON(val interface{}) (*JSON, error) {
 				return nil, err
 			}
 
-			newMap[key.String()] = njs
+			var fk string
+			if key.Kind() == reflect.String {
+				fk = key.String()
+			} else if isValInteger(key) {
+				fk = fmt.Sprintf("%d", key.Interface())
+			}
+
+			newMap[fk] = njs
 		}
 
 		newJSON.val = newMap
