@@ -87,7 +87,8 @@ func (json *JSON) DeleteField(key interface{}) bool {
 }
 
 // DeleteItem delete element on index i. Will panic if kind is not Array.
-// If i bigger than items count minus 1 (len(vals)-1, the last index), panic will occur
+// If i bigger than items count minus 1 (len(vals)-1, the last index), panic will occur.
+// If item is existed, true is returned, otherwise false
 func (json *JSON) DeleteItem(i int) bool {
 	if json.kind != Array {
 		panic("value is not array")
