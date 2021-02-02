@@ -62,8 +62,8 @@ func (json *JSON) DeleteField(key string) {
 	getParent(json).reParse()
 }
 
-// DeleteElm delete element on index i. Will panic if JSON.Kind != Array
-func (json *JSON) DeleteElm(i int) {
+// DeleteItem delete element on index i. Will panic if JSON.Kind != Array
+func (json *JSON) DeleteItem(i int) {
 	if json.kind != Array {
 		panic("value is not array")
 	}
