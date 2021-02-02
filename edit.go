@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-// EditStr edit string value. Will panic if JSON.Kind != String
+// EditStr edit string value. Will panic if kind is not String
 func (json *JSON) EditStr(str string) {
 	if json.kind != String {
 		panic("value is not string")
@@ -16,7 +16,7 @@ func (json *JSON) EditStr(str string) {
 	getParent(json).reParse()
 }
 
-// EditInt edit int value. Will panic if JSON.Kind != Integer
+// EditInt edit int value. Will panic if kind is not Integer
 func (json *JSON) EditInt(i int64) {
 	if json.kind != Integer {
 		panic("value is not int")
@@ -27,7 +27,7 @@ func (json *JSON) EditInt(i int64) {
 	getParent(json).reParse()
 }
 
-// EditFloat edit float value. Will panic if JSON.Kind != Float
+// EditFloat edit float value. Will panic if kind is not Float
 func (json *JSON) EditFloat(i float64) {
 	if json.kind != Float {
 		panic("value is not float")
@@ -38,7 +38,7 @@ func (json *JSON) EditFloat(i float64) {
 	getParent(json).reParse()
 }
 
-// EditBool edit bool value. Will panic if JSON.Kind != Boolean
+// EditBool edit bool value. Will panic if kind is not Boolean
 func (json *JSON) EditBool(b bool) {
 	if json.kind != Boolean {
 		panic("value is not bool")
@@ -49,7 +49,7 @@ func (json *JSON) EditBool(b bool) {
 	getParent(json).reParse()
 }
 
-// DeleteField delete object field by key. Will panic if JSON.Kind != Object
+// DeleteField delete object field by key. Will panic if kind is not Object
 func (json *JSON) DeleteField(key string) {
 	if json.kind != Object {
 		panic("value is not object")
@@ -62,7 +62,7 @@ func (json *JSON) DeleteField(key string) {
 	getParent(json).reParse()
 }
 
-// DeleteItem delete element on index i. Will panic if JSON.Kind != Array
+// DeleteItem delete element on index i. Will panic if kind is not Array
 func (json *JSON) DeleteItem(i int) {
 	if json.kind != Array {
 		panic("value is not array")
@@ -79,7 +79,7 @@ func (json *JSON) DeleteItem(i int) {
 	getParent(json).reParse()
 }
 
-// AddField add new field to object. Will panic if JSON.Kind != Object.
+// AddField add new field to object. Will panic if kind is not Object.
 // Will panic if val is invalid json value.
 // If val is map, and key is not string, panic will occur
 func (json *JSON) AddField(key string, val interface{}) {
