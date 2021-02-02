@@ -79,8 +79,10 @@ func (json *JSON) DeleteElm(i int) {
 	getParent(json).reParse()
 }
 
-// AddField add new field to object. Will panic if JSON.Kind != Object
-func (json *JSON) AddField(key string, val interface{}) error {
+// AddField add new field to object. Will panic if JSON.Kind != Object.
+// Will panic if val is invalid json value.
+// If val is map, and key is not string, panic will occur
+func (json *JSON) AddField(key string, val interface{}) {
 	if json.kind != Object {
 		panic("value is not object")
 	}
@@ -89,12 +91,13 @@ func (json *JSON) AddField(key string, val interface{}) error {
 
 	newJSON, err := generateJSON(val)
 	if err != nil {
-		return err
+		panic(err.Error())
 	}
 
-	keyval[key] = newJSON
+	newJSON.parent = json
 
-	return nil
+	keyval[key] = newJSON
+	getParent(json).reParse()
 }
 
 // check if reflection value kind is integer
@@ -157,19 +160,137 @@ func generateJSON(val interface{}) (*JSON, error) {
 
 	// integer
 	if isValIsInteger(refVal) {
+		var i interface{}
+		newRefVal := reflect.ValueOf(&i)
+		newRefVal.Elem().Set(refVal)
+		newJSON := &JSON{
+			kind: Integer,
+			val:  i,
+		}
 
+		return newJSON, nil
 	}
 
-	// // array
-	// if refVal.Kind() == reflect.Array || refVal.Kind() == reflect.Slice {
-	// 	for i := 0; i < refVal.Len(); i++ {
-	// 		item := refVal.Index(i)
-	// 		for item.Kind() == reflect.Ptr || item.Kind() == reflect.Interface {
-	// 			item = item.Elem()
-	// 		}
+	// float
+	if isValIsFloat(refVal) {
+		var i interface{}
+		newRefVal := reflect.ValueOf(&i)
+		newRefVal.Elem().Set(refVal)
+		newJSON := &JSON{
+			kind: Float,
+			val:  i,
+		}
 
-	// 	}
-	// }
+		return newJSON, nil
+	}
+
+	// bool
+	if refVal.Kind() == reflect.Bool {
+		var b bool
+		newRefVal := reflect.ValueOf(&b)
+		newRefVal.Elem().Set(refVal)
+		newJSON := &JSON{
+			kind: Float,
+			val:  b,
+		}
+
+		return newJSON, nil
+	}
+
+	// array
+	if refVal.Kind() == reflect.Array || refVal.Kind() == reflect.Slice {
+		newJSON := &JSON{kind: Array}
+		arr := make([]*JSON, refVal.Len())
+		for i := 0; i < refVal.Len(); i++ {
+			item := refVal.Index(i)
+
+			if item.IsZero() {
+				njs, _ := generateJSON(nil)
+				arr[i] = njs
+
+				continue
+			}
+
+			for item.Kind() == reflect.Ptr || item.Kind() == reflect.Interface {
+				item = item.Elem()
+			}
+
+			njs, err := generateJSON(item.Interface())
+			if err != nil {
+				return nil, err
+			}
+
+			arr[i] = njs
+		}
+
+		newJSON.val = arr
+		return newJSON, nil
+	}
+
+	// object from map
+	if refVal.Kind() == reflect.Map {
+		newJSON := &JSON{kind: Object}
+		newMap := make(map[string]*JSON)
+		for _, key := range refVal.MapKeys() {
+			if key.Kind() != reflect.String {
+				return nil, errors.New("map key must be string")
+			}
+
+			item := refVal.MapIndex(key)
+
+			if item.IsZero() {
+				njs, _ := generateJSON(nil)
+				newMap[key.String()] = njs
+
+				continue
+			}
+
+			for item.Kind() == reflect.Ptr || item.Kind() == reflect.Interface {
+				item = item.Elem()
+			}
+
+			njs, err := generateJSON(item.Interface())
+			if err != nil {
+				return nil, err
+			}
+
+			newMap[key.String()] = njs
+		}
+
+		newJSON.val = newMap
+		return newJSON, nil
+	}
+
+	// object from struct
+	if refVal.Kind() == reflect.Struct {
+		valType := refVal.Type()
+		newJSON := &JSON{kind: Object}
+		newMap := make(map[string]*JSON)
+		for i := 0; i < refVal.NumField(); i++ {
+			// field name
+			var fk string
+
+			// field from reflect.Value
+			fv := refVal.Field(i)
+			// field from reflect.Type
+			ft := valType.Field(i)
+
+			// if there is no json tag, use field name as json field name
+			if fk = ft.Tag.Get("json"); fk == "" {
+				fk = ft.Name
+			}
+
+			nj, err := generateJSON(fv.Interface())
+			if err != nil {
+				return nil, err
+			}
+
+			newMap[fk] = nj
+		}
+
+		newJSON.val = newMap
+		return newJSON, nil
+	}
 
 	return nil, errors.New("type unsupported")
 }
