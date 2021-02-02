@@ -90,7 +90,7 @@ func parseKeyVal(r reader, json *JSON, objMap *objMap) error {
 			return err
 		}
 
-		id = str.val.(string)
+		id = string(str.raw)
 		break
 	}
 
@@ -140,8 +140,9 @@ func parseKeyVal(r reader, json *JSON, objMap *objMap) error {
 			return errInvalid
 		}
 
-		objMap.val[id] = val
-		json.pushRns([]rune(`"` + id + `":`))
+		// remove quotes
+		objMap.val[id[1:len(id)-1]] = val
+		json.pushRns([]rune(id + ":"))
 		json.pushRns(val.raw)
 		val.parent = json
 		break
