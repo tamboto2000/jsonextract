@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/tamboto2000/jsonextract/v2"
+	"github.com/tamboto2000/jsonextract/v3"
 )
 
 type User struct {
@@ -51,11 +51,15 @@ func main() {
 	json.AddField("array", []interface{}{"Hello", "World!", 1, -2, 0.3, nil})
 
 	// add object with map
-	json.AddField("mapObj", map[string]interface{}{
+	json.AddField("mapObj", map[interface{}]interface{}{
 		"string": "Hello world",
 		"int32":  int32(32),
 		"null":   nil,
+		123:      456,
 	})
+
+	// add value with integer key
+	json.AddField(123, "integer key")
 
 	// add object with struct
 	json.AddField("structObj", User{
@@ -66,11 +70,18 @@ func main() {
 	// when you edit a value, it automatically generate new raw json
 
 	// edit field "key" value.
-	keyVal["key"].EditStr("Hello World")
+	keyVal["key"].SetStr("Hello World")
 
 	// edit field intVal
-	keyVal["intVal"].EditInt(69)
+	keyVal["intVal"].SetInt(69)
+
+	// delete a field
+	if json.DeleteField(123) {
+		fmt.Println("deleted field", 123)
+	}
 
 	// print raw JSON
 	fmt.Println("edited raw:", string(json.Runes()))
+	// print items len
+	fmt.Println("len:", json.Len())
 }

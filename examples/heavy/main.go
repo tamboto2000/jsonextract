@@ -1,6 +1,6 @@
 package main
 
-import "github.com/tamboto2000/jsonextract/v2"
+import "github.com/tamboto2000/jsonextract/v3"
 
 func main() {
 	jsons, err := jsonextract.FromFile("test.txt")

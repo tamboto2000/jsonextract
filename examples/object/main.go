@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/tamboto2000/jsonextract/v2"
+	"github.com/tamboto2000/jsonextract/v3"
 )
 
 func main() {
