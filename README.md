@@ -71,7 +71,7 @@ for _, json := range jsons {
 }
 ```
 
-Getter methods, such as ```JSON.String()```, ```JSON.Integer()```, ```JSON.Float()```, etc., will panic if JSON kind did not match the getter methods, for example, when trying to get string value from ```JSON``` with kind of ```Integer```. ```JSON``` with kind of ```Null``` didn't have getter method
+Getter methods, such as ```JSON.String()```, ```JSON.Integer()```, ```JSON.Float()```, etc., will panic if ```JSON``` kind did not match the getter methods, for example, when trying to get string value from ```JSON``` with kind of ```Integer```. ```JSON``` with kind of ```Null``` didn't have getter method
 
 ### Modifying Value
 
