@@ -169,6 +169,22 @@ func (json *JSON) AddItem(val interface{}) {
 	getParent(json).reParse()
 }
 
+// Len return items count inside JSON.
+// If JSON is not Array or Object, Len will return 0, so please check the JSON kind first
+func (json *JSON) Len() int {
+	if json.kind == Object {
+		vals := json.val.(map[string]*JSON)
+		return len(vals)
+	}
+
+	if json.kind == Array {
+		vals := json.val.([]*JSON)
+		return len(vals)
+	}
+
+	return 0
+}
+
 // check if reflection value kind is integer
 func isValInteger(val reflect.Value) bool {
 	// integer
