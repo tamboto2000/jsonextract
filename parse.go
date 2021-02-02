@@ -28,7 +28,7 @@ type JSON struct {
 	parent *JSON
 }
 
-// Reparsing JSON to produce new raw JSON bytes and runes.
+// reparsing JSON to produce new raw JSON bytes and runes.
 // This method is called if value inside JSON is edited
 func (json *JSON) reParse() {
 	if json.kind != Object && json.kind != Array {
