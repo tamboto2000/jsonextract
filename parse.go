@@ -113,7 +113,7 @@ func (json *JSON) Bytes() []byte {
 	return runesToUTF8(json.raw)
 }
 
-// Object return map of JSON. Will panic if Kind != Object
+// Object return map of JSON. Will panic if kind is not Object
 func (json *JSON) Object() map[string]*JSON {
 	if json.kind != Object {
 		panic("value is not object")
@@ -122,7 +122,7 @@ func (json *JSON) Object() map[string]*JSON {
 	return json.val.(map[string]*JSON)
 }
 
-// Array return array of JSON. Will panic if Kind != Array
+// Array return array of JSON. Will panic if kind is not Array
 func (json *JSON) Array() []*JSON {
 	if json.kind != Array {
 		panic("value is not array")
@@ -131,7 +131,7 @@ func (json *JSON) Array() []*JSON {
 	return json.val.([]*JSON)
 }
 
-// String return string value. Will panic if Kind != String
+// String return string value. Will panic if kind is not String
 func (json *JSON) String() string {
 	if json.kind != String {
 		panic("value is not string")
@@ -140,7 +140,7 @@ func (json *JSON) String() string {
 	return json.val.(string)
 }
 
-// Integer return int value. Will panic if Kind != Integer
+// Integer return int value. Will panic if kind is not Integer
 func (json *JSON) Integer() int64 {
 	if json.kind != Integer {
 		panic("value is not int")
@@ -149,7 +149,7 @@ func (json *JSON) Integer() int64 {
 	return convertIntTo64(json.val)
 }
 
-// Float return float value. Will panic if Kind != Float
+// Float return float value. Will panic if kind is not Float
 func (json *JSON) Float() float64 {
 	if json.kind != Float {
 		panic("value is not float")
@@ -158,7 +158,7 @@ func (json *JSON) Float() float64 {
 	return convertFloatTo64(json.val)
 }
 
-// Boolean return bool value. Will panic if Kind != Boolean
+// Boolean return bool value. Will panic if kind is not Boolean
 func (json *JSON) Boolean() bool {
 	if json.kind != Boolean {
 		panic("value is not bool")
