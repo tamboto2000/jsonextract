@@ -99,24 +99,21 @@ Json object represented as ```JSON``` with kind of ```Object```. For adding a ne
 
 ```go
 json.AddField("name", "Franklin Collin Tamboto")
+
 json.AddField("email", "tamboto2000@gmail.com")
+
 json.AddField("id", 1)
-```
 
-You can use pointer to a type as value, you can also assign all types of integer value and floating point value
-
-```go
-// add *int as value
 i := 1
 json.AddField("id", &i)
 
-// add int32 as value
+
 json.AddField("qty", int32(23))
 
-// add uint as value
+
 json.AddField("userId", uint(2))
 
-// add float32 as value
+
 json.AddField("height", float32(3.2))
 ```
 
