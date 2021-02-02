@@ -100,6 +100,25 @@ func (json *JSON) AddField(key string, val interface{}) {
 	getParent(json).reParse()
 }
 
+// AddItem add new item in json array. Will panic if kind is not Array.
+// Will panic if val is invalid json value
+func (json *JSON) AddItem(val interface{}) {
+	if json.kind != Array {
+		panic("value is not array")
+	}
+
+	newJSON, err := generateJSON(val)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	vals := json.val.([]*JSON)
+	vals = append(vals, newJSON)
+
+	json.val = vals
+	getParent(json).reParse()
+}
+
 // check if reflection value kind is integer
 func isValIsInteger(val reflect.Value) bool {
 	// integer
