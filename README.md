@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/tamboto2000/jsonextract.svg)](https://pkg.go.dev/github.com/tamboto2000/jsonextract/v3)
 
-Package jsonextract is a library for extracting JSON from a given source, such as string, bytes, file, and io.Reader, providing methods for editing and evaluating json values
+Package jsonextract is a library for extracting JSON from a given source, such as string, bytes, file, and io.Reader, providing methods for editing and evaluating json values. One of the cases to use this library is to extract all json strings in a scraped HTML page
 
 ### Installation
 JSONExtract require Go v1.14 or higher
@@ -167,7 +167,7 @@ if json.DeleteField(int32(123)) {
 }
 ```
 
-To access all contained items, call ```JSON.Object()```, this method will return ```[]*JSON```
+To access all contained items, call ```JSON.Object()```, this method will return ```map[interface{}]*JSON```
 
 ```go
 fields := json.Object()
