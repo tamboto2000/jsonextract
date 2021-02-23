@@ -81,6 +81,11 @@ func parseKeyVal(r reader, json *JSON, objMap *objMap) error {
 			continue
 		}
 
+		if char == '}' {
+			r.UnreadRune()
+			return nil
+		}
+
 		if char != '"' {
 			return errInvalid
 		}
