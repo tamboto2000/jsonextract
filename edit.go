@@ -73,7 +73,7 @@ func (json *JSON) DeleteField(key interface{}) bool {
 		keyStr = fmt.Sprintf("%d", valKey.Interface())
 	}
 
-	keyVal := json.val.(map[string]*JSON)
+	keyVal := json.val.(map[interface{}]*JSON)
 	if _, ok := keyVal[keyStr]; !ok {
 		return false
 	}
@@ -121,7 +121,7 @@ func (json *JSON) AddField(key interface{}, val interface{}) {
 		panic("value is not object")
 	}
 
-	keyval := json.val.(map[string]*JSON)
+	keyval := json.val.(map[interface{}]*JSON)
 
 	newJSON, err := generateJSON(val)
 	if err != nil {
@@ -131,7 +131,7 @@ func (json *JSON) AddField(key interface{}, val interface{}) {
 	newJSON.parent = json
 
 	keyVal := reflect.ValueOf(key)
-	for keyVal.Kind() == reflect.Ptr || keyVal.Kind() == reflect.Interface {
+	for keyVal.Kind() == reflect.Interface {
 		keyVal = keyVal.Elem()
 	}
 
@@ -139,14 +139,14 @@ func (json *JSON) AddField(key interface{}, val interface{}) {
 		panic("key must be string or an integer type")
 	}
 
-	var fk string
-	if keyVal.Kind() == reflect.String {
-		fk = keyVal.String()
-	} else if isValInteger(keyVal) {
-		fk = fmt.Sprintf("%d", keyVal.Interface())
-	}
+	// var fk string
+	// if keyVal.Kind() == reflect.String {
+	// 	fk = keyVal.String()
+	// } else if isValInteger(keyVal) {
+	// 	fk = fmt.Sprintf("%d", keyVal.Interface())
+	// }
 
-	keyval[fk] = newJSON
+	keyval[key] = newJSON
 	getParent(json).reParse()
 }
 
@@ -173,7 +173,7 @@ func (json *JSON) AddItem(val interface{}) {
 // If JSON is not Array or Object, Len will return 0, so please check the JSON kind first
 func (json *JSON) Len() int {
 	if json.kind == Object {
-		vals := json.val.(map[string]*JSON)
+		vals := json.val.(map[interface{}]*JSON)
 		return len(vals)
 	}
 
@@ -315,9 +315,9 @@ func generateJSON(val interface{}) (*JSON, error) {
 	// object from map
 	if refVal.Kind() == reflect.Map {
 		newJSON := &JSON{kind: Object}
-		newMap := make(map[string]*JSON)
+		newMap := make(map[interface{}]*JSON)
 		for _, key := range refVal.MapKeys() {
-			for key.Kind() == reflect.Ptr || key.Kind() == reflect.Interface {
+			for key.Kind() == reflect.Interface {
 				key = key.Elem()
 			}
 
@@ -329,7 +329,7 @@ func generateJSON(val interface{}) (*JSON, error) {
 
 			if item.IsZero() {
 				njs, _ := generateJSON(nil)
-				newMap[key.String()] = njs
+				newMap[key.Interface()] = njs
 
 				continue
 			}
@@ -343,14 +343,7 @@ func generateJSON(val interface{}) (*JSON, error) {
 				return nil, err
 			}
 
-			var fk string
-			if key.Kind() == reflect.String {
-				fk = key.String()
-			} else if isValInteger(key) {
-				fk = fmt.Sprintf("%d", key.Interface())
-			}
-
-			newMap[fk] = njs
+			newMap[key.Interface()] = njs
 		}
 
 		newJSON.val = newMap
@@ -361,7 +354,7 @@ func generateJSON(val interface{}) (*JSON, error) {
 	if refVal.Kind() == reflect.Struct {
 		valType := refVal.Type()
 		newJSON := &JSON{kind: Object}
-		newMap := make(map[string]*JSON)
+		newMap := make(map[interface{}]*JSON)
 		for i := 0; i < refVal.NumField(); i++ {
 			// field name
 			var fk string
@@ -374,7 +367,7 @@ func generateJSON(val interface{}) (*JSON, error) {
 			// if there is no json tag, use field name as json field name
 			if fk = ft.Tag.Get("json"); fk == "" {
 				fk = ft.Name
-			}
+			} 
 
 			nj, err := generateJSON(fv.Interface())
 			if err != nil {

@@ -3,6 +3,7 @@ package jsonextract
 import (
 	"bytes"
 	jsonenc "encoding/json"
+	"fmt"
 	"io"
 	"reflect"
 	"unicode"
@@ -21,9 +22,9 @@ const (
 
 // JSON represent json val
 type JSON struct {
-	kind int
-	val  interface{}
-	raw  []rune	
+	kind   int
+	val    interface{}
+	raw    []rune
 	parent *JSON
 }
 
@@ -38,7 +39,7 @@ func (json *JSON) reParse() {
 	}
 
 	if json.kind == Object {
-		keyVals := json.val.(map[string]*JSON)
+		keyVals := json.val.(map[interface{}]*JSON)
 		newRaw := make([]rune, 0)
 		newRaw = append(newRaw, '{')
 		objLen := len(keyVals)
@@ -46,11 +47,22 @@ func (json *JSON) reParse() {
 			objLen--
 			val.reParse()
 
-			// Key sequence
-			newRaw = append(newRaw, '"')
-			newRaw = append(newRaw, []rune(key)...)
-			newRaw = append(newRaw, '"')
-			newRaw = append(newRaw, ':')
+			switch key.(type) {
+			case string:
+				// Key sequence for string field name/key
+				newRaw = append(newRaw, '"')
+				newRaw = append(newRaw, []rune(key.(string))...)
+				newRaw = append(newRaw, '"')
+				newRaw = append(newRaw, ':')
+
+			default:
+				// Key sequence for integer field name/key
+				keyStr := fmt.Sprintf("%d", key)
+				newRaw = append(newRaw, '"')
+				newRaw = append(newRaw, []rune(keyStr)...)
+				newRaw = append(newRaw, '"')
+				newRaw = append(newRaw, ':')
+			}
 
 			// value
 			newRaw = append(newRaw, val.raw...)
@@ -113,12 +125,12 @@ func (json *JSON) Bytes() []byte {
 }
 
 // Object return map of JSON. Will panic if kind is not Object
-func (json *JSON) Object() map[string]*JSON {
+func (json *JSON) Object() map[interface{}]*JSON {
 	if json.kind != Object {
 		panic("value is not object")
 	}
 
-	return json.val.(map[string]*JSON)
+	return json.val.(map[interface{}]*JSON)
 }
 
 // Array return array of JSON. Will panic if kind is not Array

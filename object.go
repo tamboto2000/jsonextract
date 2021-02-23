@@ -7,7 +7,7 @@ import (
 
 func parseObj(r reader) (*JSON, error) {
 	json := &JSON{kind: Object}
-	objMap := &objMap{val: make(map[string]*JSON)}
+	objMap := &objMap{val: make(map[interface{}]*JSON)}
 	json.push('{')
 
 	// find first value
@@ -152,5 +152,5 @@ func parseKeyVal(r reader, json *JSON, objMap *objMap) error {
 }
 
 type objMap struct {
-	val map[string]*JSON
+	val map[interface{}]*JSON
 }
